@@ -53,14 +53,14 @@
 
         <p>Nezini, ko šodien spēlēt?</p>
 
-        <p>
-            Atrodi sev piemērotu spēli vai ļauj sistēmai izvēlēties nejauši.
-        </p>
 
         <div class="buttons">
-            <button>Meklēt spēles</button>
-            <button>Random spēle</button>
-        </div>
+    <button>Meklēt spēles</button>
+
+    <a href="/random">
+        <button>Random spēle</button>
+    </a>
+</div>
 
     </div>
 
