@@ -10,13 +10,17 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('games', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
-    }
-
+{
+    Schema::create('games', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->text('description');
+        $table->string('genre');
+        $table->string('platform');
+        $table->year('release_year');
+        $table->timestamps();
+    });
+}
     /**
      * Reverse the migrations.
      */
