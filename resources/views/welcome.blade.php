@@ -34,13 +34,17 @@
             margin-top: 35px;
         }
 
-        button {
+        .button {
+            display: inline-block;
             padding: 15px 30px;
             margin: 10px;
             font-size: 18px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            color: #fff;
+            background: #6d4aff;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -55,14 +59,10 @@
 
 
         <div class="buttons">
-    <button>Meklēt spēles</button>
-
-    <a href="/random">
-        <button>Random spēle</button>
-    </a>
+    <a class="button" href="{{ url('/random#meklet') }}">Meklēt spēles</a>
+    <a class="button" href="{{ url('/random') }}">Random spēle</a>
 </div>
 
     </div>
 
 </body>
-</html>

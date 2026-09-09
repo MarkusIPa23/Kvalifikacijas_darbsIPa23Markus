@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'freetogame' => [
+        'url' => env('FREETOGAME_API_URL', 'https://www.freetogame.com/api'),
+    ],
+
 ];
