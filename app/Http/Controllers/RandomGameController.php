@@ -3,120 +3,349 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class RandomGameController extends Controller
 {
+    private const PAGE_SIZE = 12;
+
+    /** @var array<string, string> */
+    private const GENRES = [
+        'action' => 'Action',
+        'adventure' => 'Adventure',
+        'arcade' => 'Arcade',
+        'fighting' => 'Fighting',
+        'indie' => 'Indie',
+        'platformer' => 'Platformer',
+        'puzzle' => 'Puzzle',
+        'racing' => 'Racing',
+        'role-playing-games-rpg' => 'RPG',
+        'shooter' => 'Shooter',
+        'simulation' => 'Simulation',
+        'sports' => 'Sports',
+        'strategy' => 'Strategy',
+    ];
+
+    /** @var array<string, string> */
+    private const PLATFORMS = [
+        'pc' => 'PC',
+        'playstation' => 'PlayStation',
+        'xbox' => 'Xbox',
+        'nintendo-switch' => 'Nintendo Switch',
+    ];
+
+    /** @var array<string, string> */
+    private const PLATFORM_IDS = [
+        'pc' => '4',
+        'playstation' => '187,18,16,15,27,19,17',
+        'xbox' => '186,1,14,80',
+        'nintendo-switch' => '7',
+    ];
+
+    /** @var array<string, string> */
+    private const ORDERINGS = [
+        '-added' => 'Populārākās',
+        '-rating' => 'Augstākais vērtējums',
+        '-released' => 'Jaunākās',
+        'name' => 'Nosaukums A–Z',
+    ];
+
     /**
-     * Show a random recommendation or games that match a title search.
+     * Show the searchable RAWG catalogue with filters and pagination.
      */
-    public function __invoke(Request $request): View
+    public function search(Request $request): View
     {
-        $filters = $request->validate([
-            'search' => ['nullable', 'string', 'max:100'],
-            'genre' => ['nullable', 'in:mmorpg,shooter,moba,strategy,racing,sports,fighting'],
-            'platform' => ['nullable', 'in:pc,browser'],
-            'year' => ['nullable', 'in:2010-2015,2016-2020,2021-2026'],
-        ]);
+        $filters = $this->validatedFilters($request);
+        $page = $request->integer('page', 1);
+        $catalogue = $this->catalogue($filters, $page);
 
-        $games = $this->games();
-
-        if ($games === null) {
-            return view('random', [
-                'game' => null,
-                'searchResults' => collect(),
-                'isSearching' => filled($filters['search'] ?? null),
-                'resultsCount' => 0,
+        if ($catalogue === null) {
+            return view('games', [
+                'games' => $this->paginator(collect(), 0, $page, $request),
                 'filters' => $filters,
+                'genres' => self::GENRES,
+                'platforms' => self::PLATFORMS,
+                'orderings' => self::ORDERINGS,
+                'favoriteIds' => $this->favoriteIds($request),
                 'error' => 'Pašlaik nevarējām saņemt spēļu sarakstu. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
         }
 
-        $matchingGames = $games
-            ->filter(fn (array $game): bool => $this->matchesFilters($game, $filters))
-            ->values();
+        $favoriteIds = $this->favoriteIds($request);
 
-        $isSearching = filled($filters['search'] ?? null);
+        return view('games', [
+            'games' => $this->paginator($catalogue['games'], $catalogue['total'], $page, $request),
+            'filters' => $filters,
+            'genres' => self::GENRES,
+            'platforms' => self::PLATFORMS,
+            'orderings' => self::ORDERINGS,
+            'favoriteIds' => $favoriteIds,
+            'error' => null,
+        ]);
+    }
+
+    public function toggleFavorite(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $game = $request->validate([
+            'id' => ['required', 'integer', 'min:1'],
+            'title' => ['required', 'string', 'max:255'],
+            'thumbnail' => ['nullable', 'url', 'max:2048'],
+            'url' => ['required', 'url', 'max:2048'],
+            'genre' => ['required', 'string', 'max:255'],
+            'platform' => ['required', 'string', 'max:255'],
+            'releaseDate' => ['required', 'string', 'max:30'],
+            'rating' => ['nullable', 'numeric', 'between:0,5'],
+            'description' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $favorites = $request->session()->get('favorite_games', []);
+        $id = (string) $game['id'];
+
+        if (array_key_exists($id, $favorites)) {
+            unset($favorites[$id]);
+        } else {
+            $favorites[$id] = $game;
+        }
+
+        $request->session()->put('favorite_games', $favorites);
+
+        return back();
+    }
+
+    /**
+     * Show one different random game each time the user presses the button.
+     */
+    public function random(Request $request): View
+    {
+        $total = $this->totalGames();
+
+        if ($total === null || $total === 0) {
+            return view('random', [
+                'game' => null,
+                'error' => 'Pašlaik nevarējām saņemt nejaušu spēli. Lūdzu, pamēģini vēlreiz pēc brīža.',
+            ]);
+        }
+
+        $lastGameId = $request->session()->get('last_random_game_id');
+        $maxPage = max(1, (int) ceil($total / self::PAGE_SIZE));
+        $game = null;
+
+        for ($attempt = 0; $attempt < 5 && $game === null; $attempt++) {
+            $catalogue = $this->catalogue([], random_int(1, $maxPage));
+
+            if ($catalogue === null || $catalogue['games']->isEmpty()) {
+                continue;
+            }
+
+            $candidates = $catalogue['games']->reject(
+                fn (array $candidate): bool => $candidate['id'] === $lastGameId,
+            );
+
+            if ($candidates->isNotEmpty()) {
+                $game = $candidates->random();
+            }
+        }
+
+        if ($game === null) {
+            return view('random', [
+                'game' => null,
+                'error' => 'Pašlaik nevarējām saņemt nejaušu spēli. Lūdzu, pamēģini vēlreiz pēc brīža.',
+            ]);
+        }
+
+        $request->session()->put('last_random_game_id', $game['id']);
 
         return view('random', [
-            'game' => ! $isSearching && $matchingGames->isNotEmpty() ? $matchingGames->random() : null,
-            'searchResults' => $isSearching ? $matchingGames->take(12) : collect(),
-            'isSearching' => $isSearching,
-            'resultsCount' => $matchingGames->count(),
-            'filters' => $filters,
-            'error' => $matchingGames->isEmpty()
-                ? 'Pēc šiem kritērijiem spēle netika atrasta. Pamēģini izvēlēties mazāk filtru.'
-                : null,
+            'game' => $game,
+            'isFavorite' => $this->isFavorite($request, $game['id']),
+            'error' => null,
         ]);
     }
 
     /**
-     * Get the catalogue once per hour instead of calling the public API on every page load.
+     * Validate only filters accepted by the API and keep the search query in the URL.
+     *
+     * @return array<string, string>
      */
-    private function games(): ?Collection
+    private function validatedFilters(Request $request): array
     {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'genre' => ['nullable', Rule::in(array_keys(self::GENRES))],
+            'platform' => ['nullable', Rule::in(array_keys(self::PLATFORMS))],
+            'year' => ['nullable', 'integer', 'min:1950', 'max:'.(now()->year + 1)],
+            'ordering' => ['nullable', Rule::in(array_keys(self::ORDERINGS))],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        unset($filters['page']);
+
+        return $filters;
+    }
+
+    /**
+     * Fetch a single catalogue page. Its cache key includes every selected filter.
+     *
+     * @param  array<string, string>  $filters
+     * @return array{games: Collection<int, array<string, mixed>>, total: int}|null
+     */
+    private function catalogue(array $filters, int $page): ?array
+    {
+        if (blank(config('services.rawg.key'))) {
+            return null;
+        }
+
+        $query = $this->apiQuery($filters, $page);
+        $cacheKey = 'rawg.catalogue.'.md5(http_build_query(Arr::except($query, 'key')));
+
         try {
-            $games = Cache::remember('freetogame.games', now()->addHour(), function (): array {
-                $response = Http::baseUrl(config('services.freetogame.url'))
+            $payload = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($query): array {
+                $response = Http::baseUrl(config('services.rawg.url'))
                     ->acceptJson()
                     ->timeout(10)
-                    ->get('games');
-
-                if ($response->failed()) {
-                    throw new ConnectionException('FreeToGame API request failed.');
-                }
+                    ->get('games', $query)
+                    ->throw();
 
                 return $response->json();
             });
 
-            return collect($games)
-                ->filter(fn (mixed $game): bool => is_array($game) && filled($game['title'] ?? null))
-                ->values();
-        } catch (ConnectionException) {
+            return [
+                'games' => collect($payload['results'] ?? [])
+                    ->filter(fn (mixed $game): bool => is_array($game) && filled($game['name'] ?? null))
+                    ->map(fn (array $game): array => $this->normalizeGame($game))
+                    ->values(),
+                'total' => (int) ($payload['count'] ?? 0),
+            ];
+        } catch (ConnectionException|RequestException) {
             return null;
         }
     }
 
     /**
-     * Apply filters locally because the API's filter options are limited.
+     * Cache the catalogue count for a day; selecting a random page then needs only one request.
+     */
+    private function totalGames(): ?int
+    {
+        if (blank(config('services.rawg.key'))) {
+            return null;
+        }
+
+        try {
+            return Cache::remember('rawg.catalogue.total', now()->addDay(), function (): int {
+                $response = Http::baseUrl(config('services.rawg.url'))
+                    ->acceptJson()
+                    ->timeout(10)
+                    ->get('games', [
+                        'key' => config('services.rawg.key'),
+                        'page' => 1,
+                        'page_size' => 1,
+                    ])
+                    ->throw();
+
+                return (int) $response->json('count', 0);
+            });
+        } catch (ConnectionException|RequestException) {
+            return null;
+        }
+    }
+
+    /** @return array<string, bool> */
+    private function favoriteIds(Request $request): array
+    {
+        return collect($request->session()->get('favorite_games', []))
+            ->mapWithKeys(fn (array $game): array => [(string) $game['id'] => true])
+            ->all();
+    }
+
+    private function isFavorite(Request $request, int $gameId): bool
+    {
+        return array_key_exists((string) $gameId, $request->session()->get('favorite_games', []));
+    }
+
+    /**
+     * @param  array<string, string>  $filters
+     * @return array<string, int|string>
+     */
+    private function apiQuery(array $filters, int $page): array
+    {
+        $query = [
+            'key' => config('services.rawg.key'),
+            'page' => $page,
+            'page_size' => self::PAGE_SIZE,
+            'ordering' => $filters['ordering'] ?? '-added',
+        ];
+
+        if (filled($filters['search'] ?? null)) {
+            $query['search'] = trim($filters['search']);
+        }
+
+        if (filled($filters['genre'] ?? null)) {
+            $query['genres'] = $filters['genre'];
+        }
+
+        if (filled($filters['platform'] ?? null)) {
+            $query['platforms'] = self::PLATFORM_IDS[$filters['platform']];
+        }
+
+        if (filled($filters['year'] ?? null)) {
+            $query['dates'] = $filters['year'].'-01-01,'.$filters['year'].'-12-31';
+        }
+
+        return $query;
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $games
+     */
+    private function paginator(Collection $games, int $total, int $page, Request $request): LengthAwarePaginator
+    {
+        return new LengthAwarePaginator(
+            $games,
+            $total,
+            self::PAGE_SIZE,
+            $page,
+            [
+                'path' => $request->url(),
+                'query' => $request->except('page'),
+            ],
+        );
+    }
+
+    /**
+     * Convert RAWG's nested response into fields used by the views.
      *
      * @param  array<string, mixed>  $game
-     * @param  array<string, string>  $filters
+     * @return array<string, mixed>
      */
-    private function matchesFilters(array $game, array $filters): bool
+    private function normalizeGame(array $game): array
     {
-        $search = trim($filters['search'] ?? '');
+        $genres = collect($game['genres'] ?? [])
+            ->pluck('name')
+            ->filter()
+            ->values();
+        $platforms = collect($game['platforms'] ?? [])
+            ->map(fn (mixed $platform): mixed => is_array($platform) ? ($platform['platform']['name'] ?? null) : null)
+            ->filter()
+            ->values();
 
-        if ($search !== '' && ! Str::contains(Str::lower($game['title'] ?? ''), Str::lower($search))) {
-            return false;
-        }
-
-        if (($filters['genre'] ?? null) && strcasecmp($game['genre'] ?? '', $filters['genre']) !== 0) {
-            return false;
-        }
-
-        $platform = strtolower($game['platform'] ?? '');
-
-        if (($filters['platform'] ?? null) === 'pc' && ! str_contains($platform, 'pc')) {
-            return false;
-        }
-
-        if (($filters['platform'] ?? null) === 'browser' && ! str_contains($platform, 'browser')) {
-            return false;
-        }
-
-        if (! ($filters['year'] ?? null)) {
-            return true;
-        }
-
-        [$from, $to] = array_map('intval', explode('-', $filters['year']));
-        $releaseYear = (int) substr((string) ($game['release_date'] ?? ''), 0, 4);
-
-        return $releaseYear >= $from && $releaseYear <= $to;
+        return [
+            'id' => (int) ($game['id'] ?? 0),
+            'title' => $game['name'],
+            'thumbnail' => $game['background_image'] ?? null,
+            'description' => $game['description_raw'] ?? 'Apraksts nav pieejams.',
+            'url' => 'https://rawg.io/games/'.($game['slug'] ?? ''),
+            'genre' => $genres->implode(', ') ?: 'Nezināms žanrs',
+            'platform' => $platforms->implode(', ') ?: 'Nezināma platforma',
+            'releaseDate' => $game['released'] ?? 'Nav norādīts',
+            'rating' => $game['rating'] ?? null,
+        ];
     }
 }

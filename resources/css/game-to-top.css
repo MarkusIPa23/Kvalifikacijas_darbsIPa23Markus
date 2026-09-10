@@ -47,11 +47,17 @@ h1, h2, h3, p { margin-top: 0; }
 .hero-note { margin: 22px 0 0; color: #8792a5; font-size: .8rem; }
 
 .game-stack { position: relative; min-height: 390px; padding: 28px 26px 28px 80px; }
-.game-card { position: relative; padding: 26px; border: 1px solid rgba(255,255,255,.55); border-radius: 22px; overflow: hidden; color: #fff; background: var(--navy); box-shadow: 0 28px 54px rgba(26, 39, 69, .25); }
+.game-carousel { position: relative; min-height: 334px; }
+.game-card { position: absolute; inset: 0; padding: 0; border: 1px solid rgba(255,255,255,.55); border-radius: 22px; overflow: hidden; color: #fff; background: var(--navy); box-shadow: 0 28px 54px rgba(26, 39, 69, .25); opacity: 0; transition: opacity .8s ease; }
+.game-card.is-active { opacity: 1; }
 .game-card::after { content: ''; position: absolute; right: -40px; bottom: -55px; width: 210px; height: 210px; border: 37px solid rgba(185, 247, 207, .13); border-radius: 50%; }
+.game-slide-image, .game-slide-overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+.game-slide-image { object-fit: cover; }
+.game-slide-overlay { background: linear-gradient(180deg, rgba(21, 32, 58, .24), rgba(21, 32, 58, .94) 78%); }
+.game-slide-content { position: relative; z-index: 1; height: 100%; padding: 26px; display: flex; flex-direction: column; justify-content: flex-end; }
 .game-card-top { display: flex; align-items: center; justify-content: space-between; color: #d0d8e8; font-size: .75rem; font-weight: 750; letter-spacing: .08em; }
 .badge { padding: 6px 10px; border-radius: 100px; color: #14253d; background: var(--mint); font-size: .65rem; font-weight: 850; letter-spacing: .08em; }
-.game-card h2 { position: relative; z-index: 1; max-width: 270px; margin: 58px 0 10px; font-size: clamp(1.9rem, 3vw, 2.55rem); line-height: 1.04; letter-spacing: -.055em; }
+.game-card h2 { position: relative; z-index: 1; max-width: 270px; margin: 16px 0 10px; font-size: clamp(1.9rem, 3vw, 2.55rem); line-height: 1.04; letter-spacing: -.055em; }
 .game-card p { position: relative; z-index: 1; max-width: 280px; margin-bottom: 28px; color: #c7d0df; font-size: .9rem; line-height: 1.55; }
 .game-meta { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; }
 .game-meta span { padding: 7px 10px; border: 1px solid rgba(255,255,255,.16); border-radius: 7px; color: #e8edf6; background: rgba(255,255,255,.08); font-size: .7rem; font-weight: 700; }
@@ -65,6 +71,27 @@ h1, h2, h3, p { margin-top: 0; }
 .section-heading { max-width: 560px; margin-bottom: 38px; }
 .section-heading h2 { margin-bottom: 12px; font-size: clamp(2rem, 3.8vw, 3.1rem); letter-spacing: -.055em; line-height: 1.05; }
 .section-heading p { margin-bottom: 0; color: var(--muted); line-height: 1.6; }
+.favorites-section { max-width: 1200px; margin: 0 auto; padding: 20px 28px 90px; }
+.favorites-section .section-heading { margin-bottom: 28px; }
+.favorite-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.favorite-card { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 9px 20px rgba(50, 64, 93, .05); }
+.favorite-card img { display: block; width: 100%; height: 125px; object-fit: cover; background: #e7eaf2; }
+.favorite-card-info { padding: 16px; }
+.favorite-card h3 { margin-bottom: 7px; font-size: 1rem; }
+.favorite-card-description { min-height: 62px; margin: 0 0 12px; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+.favorite-card-meta { min-height: 20px; margin: 0 0 14px; color: #8792a5; font-size: .72rem; line-height: 1.4; }
+.favorite-card-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.favorite-card-actions a, .favorite-card-actions button { border: 0; color: var(--purple); background: transparent; font: inherit; font-size: .78rem; font-weight: 750; cursor: pointer; text-decoration: none; }
+.favorite-card-actions button { color: #8a6410; }
+.favorites-empty { padding: 28px; border: 1px dashed #c8d1df; border-radius: 15px; color: var(--muted); background: var(--surface); }
+.favorites-empty p { margin-bottom: 18px; }
+.future-section { max-width: 1200px; margin: 0 auto; padding: 0 28px 90px; }
+.future-section .section-heading { max-width: 680px; margin-bottom: 28px; }
+.future-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.future-card { min-height: 245px; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 9px 20px rgba(50, 64, 93, .035); }
+.future-icon { display: grid; width: 35px; height: 35px; place-items: center; margin-bottom: 22px; border-radius: 10px; color: var(--purple); background: #f0edff; font-size: 1rem; font-weight: 800; }
+.future-card h3 { margin-bottom: 10px; font-size: .98rem; line-height: 1.25; }
+.future-card p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.55; }
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .step { padding: 28px; min-height: 230px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: 0 9px 20px rgba(50, 64, 93, .035); }
 .step-number { display: grid; width: 35px; height: 35px; place-items: center; margin-bottom: 34px; border-radius: 10px; color: var(--purple); background: #f0edff; font-size: .8rem; font-weight: 850; }
@@ -105,8 +132,10 @@ h1, h2, h3, p { margin-top: 0; }
     .hero { min-height: auto; padding: 52px 20px 68px; grid-template-columns: 1fr; gap: 36px; }
     .hero h1 { font-size: clamp(2.7rem, 12vw, 4.1rem); }
     .game-stack { min-height: 345px; padding-left: 28px; }
-    .steps, .selection-layout { grid-template-columns: 1fr; }
+    .steps, .selection-layout, .favorite-grid, .future-grid { grid-template-columns: 1fr; }
     .section { padding: 66px 20px; }
+    .favorites-section { padding: 20px 20px 66px; }
+    .future-section { padding: 0 20px 66px; }
     .selection-page { padding: 34px 20px 70px; }
     .filter-panel { padding: 24px; }
     .filter-grid { grid-template-columns: 1fr; gap: 16px; }
@@ -119,4 +148,8 @@ h1, h2, h3, p { margin-top: 0; }
     .game-stack { padding: 18px 0 28px; }
     .chip-one { right: -8px; }
     .chip-two { left: -8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .game-card { transition: none; }
 }

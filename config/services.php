@@ -39,4 +39,9 @@ return [
         'url' => env('FREETOGAME_API_URL', 'https://www.freetogame.com/api'),
     ],
 
+    'rawg' => [
+        'url' => env('RAWG_API_URL', 'https://api.rawg.io/api'),
+        'key' => env('RAWG_API_KEY'),
+    ],
+
 ];
