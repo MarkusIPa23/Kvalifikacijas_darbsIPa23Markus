@@ -19,6 +19,12 @@
                 <span>Game to Top</span>
             </a>
             <nav class="site-nav" aria-label="Galvenā navigācija">
+                @auth
+                    <a href="{{ route('dashboard') }}">Mans profils</a>
+                @else
+                    <a href="{{ route('login') }}">Pieteikties</a>
+                    <a class="nav-cta" href="{{ route('register') }}">Reģistrēties</a>
+                @endauth
                 <a class="nav-cta" href="{{ route('games.search') }}">🎮</a>
             </nav>
         </header>

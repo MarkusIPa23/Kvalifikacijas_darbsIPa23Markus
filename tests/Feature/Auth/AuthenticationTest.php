@@ -27,7 +27,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -50,5 +50,22 @@ class AuthenticationTest extends TestCase
 
         $this->assertGuest();
         $response->assertRedirect('/');
+    }
+
+    public function test_user_favorites_are_restored_after_login(): void
+    {
+        $user = User::factory()->create([
+            'favorite_games' => [
+                '42' => ['id' => 42, 'title' => 'Saved game'],
+            ],
+        ]);
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect(route('home', absolute: false));
+        $this->get(route('home'))->assertSee('Saved game');
     }
 }

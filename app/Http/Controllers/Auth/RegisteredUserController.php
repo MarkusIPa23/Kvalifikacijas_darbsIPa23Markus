@@ -45,7 +45,19 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+        $this->restoreFavorites($request, $user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect()->route('home');
+    }
+
+    private function restoreFavorites(Request $request, User $user): void
+    {
+        $favorites = $request->session()->get('favorite_games', []);
+
+        if ($favorites !== []) {
+            $user->update(['favorite_games' => $favorites]);
+        }
+
+        $request->session()->put('favorite_games', $favorites);
     }
 }

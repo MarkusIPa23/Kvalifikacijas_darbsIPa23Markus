@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -92,7 +93,7 @@ class RandomGameController extends Controller
         ]);
     }
 
-    public function toggleFavorite(Request $request): \Illuminate\Http\RedirectResponse
+    public function toggleFavorite(Request $request): RedirectResponse
     {
         $game = $request->validate([
             'id' => ['required', 'integer', 'min:1'],
@@ -106,7 +107,7 @@ class RandomGameController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $favorites = $request->session()->get('favorite_games', []);
+        $favorites = $this->favorites($request);
         $id = (string) $game['id'];
 
         if (array_key_exists($id, $favorites)) {
@@ -116,6 +117,10 @@ class RandomGameController extends Controller
         }
 
         $request->session()->put('favorite_games', $favorites);
+
+        if ($request->user() !== null) {
+            $request->user()->update(['favorite_games' => $favorites]);
+        }
 
         return back();
     }
@@ -260,14 +265,21 @@ class RandomGameController extends Controller
     /** @return array<string, bool> */
     private function favoriteIds(Request $request): array
     {
-        return collect($request->session()->get('favorite_games', []))
+        return collect($this->favorites($request))
             ->mapWithKeys(fn (array $game): array => [(string) $game['id'] => true])
             ->all();
     }
 
     private function isFavorite(Request $request, int $gameId): bool
     {
-        return array_key_exists((string) $gameId, $request->session()->get('favorite_games', []));
+        return array_key_exists((string) $gameId, $this->favorites($request));
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    private function favorites(Request $request): array
+    {
+        return $request->user()?->favorite_games
+            ?? $request->session()->get('favorite_games', []);
     }
 
     /**

@@ -27,8 +27,9 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        $this->restoreFavorites($request);
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->route('home');
     }
 
     /**
@@ -43,5 +44,18 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerateToken();
 
         return redirect('/');
+    }
+
+    private function restoreFavorites(Request $request): void
+    {
+        $sessionFavorites = $request->session()->get('favorite_games', []);
+        $user = $request->user();
+        $favorites = array_replace($user->favorite_games ?? [], $sessionFavorites);
+
+        if ($favorites !== ($user->favorite_games ?? [])) {
+            $user->update(['favorite_games' => $favorites]);
+        }
+
+        $request->session()->put('favorite_games', $favorites);
     }
 }

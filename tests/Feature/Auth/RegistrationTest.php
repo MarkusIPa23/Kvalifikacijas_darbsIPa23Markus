@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -26,6 +27,29 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
+    }
+
+    public function test_registration_preserves_anonymous_favorites(): void
+    {
+        $favoriteGames = [
+            '42' => [
+                'id' => 42,
+                'title' => 'Saved game',
+            ],
+        ];
+
+        $this->withSession(['favorite_games' => $favoriteGames])
+            ->post('/register', [
+                'name' => 'Test User',
+                'email' => 'test@example.com',
+                'password' => 'password',
+                'password_confirmation' => 'password',
+            ]);
+
+        $this->assertSame(
+            $favoriteGames,
+            User::where('email', 'test@example.com')->firstOrFail()->favorite_games,
+        );
     }
 }

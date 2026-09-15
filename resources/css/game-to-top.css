@@ -18,6 +18,27 @@ a { color: inherit; text-decoration: none; }
 button, select { font: inherit; }
 .page-shell { overflow: hidden; }
 
+.auth-page { min-height: 100vh; background: var(--canvas); }
+.auth-shell { min-height: 100vh; overflow: hidden; }
+.auth-header { max-width: 1200px; }
+.auth-content { max-width: 1200px; margin: 0 auto; padding: 52px 28px 90px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 470px); align-items: center; gap: 80px; }
+.auth-intro h1 { max-width: 540px; margin-bottom: 18px; font-size: clamp(2.7rem, 5vw, 4.8rem); line-height: 1.02; letter-spacing: -.068em; }
+.auth-intro > p:last-child { max-width: 460px; margin: 0; color: var(--muted); font-size: 1.05rem; line-height: 1.7; }
+.auth-card { padding: 34px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow); }
+.auth-card label { color: #3d4b62; font-size: .8rem; font-weight: 800; }
+.auth-card input[type='text'], .auth-card input[type='email'], .auth-card input[type='password'] { width: 100%; border: 1px solid #dbe1eb; border-radius: 10px; background: #fbfcfe; color: var(--ink); outline: none; box-shadow: none; }
+.auth-card input[type='text']:focus, .auth-card input[type='email']:focus, .auth-card input[type='password']:focus { border-color: var(--purple); box-shadow: 0 0 0 4px rgba(109, 74, 255, .12); }
+.auth-card button[type='submit'] { border-radius: 10px; background: var(--purple); box-shadow: 0 11px 22px rgba(89, 58, 216, .2); }
+.auth-card button[type='submit']:hover { background: var(--purple-dark); }
+.auth-card a { color: var(--purple); }
+.auth-card a:hover { color: var(--purple-dark); }
+
+@media (max-width: 760px) {
+    .auth-content { padding: 34px 20px 66px; grid-template-columns: 1fr; gap: 30px; }
+    .auth-intro h1 { font-size: clamp(2.7rem, 12vw, 4.1rem); }
+    .auth-card { padding: 24px; }
+}
+
 .site-header { position: relative; z-index: 10; max-width: 1200px; margin: 0 auto; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .brand { display: inline-flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.04em; font-size: 1.15rem; }
 .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; color: #fff; background: var(--purple); box-shadow: 0 7px 16px rgba(109, 74, 255, .32); }
