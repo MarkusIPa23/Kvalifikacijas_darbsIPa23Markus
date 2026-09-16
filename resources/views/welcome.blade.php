@@ -130,8 +130,8 @@
 
             <section class="future-section" aria-labelledby="future-title">
                 <div class="section-heading">
-                    <p class="eyebrow">NĀKOTNĒ</p>
-                    <h2 id="future-title">Tas viss nakotne!</h2>
+                    <p class="eyebrow">NĀKOTNĒ:)</p>
+                    <h2 id="future-title">Tas viss nakotne?!?!?</h2>
                 </div>
                 <div class="future-grid">
                     <article class="future-card">

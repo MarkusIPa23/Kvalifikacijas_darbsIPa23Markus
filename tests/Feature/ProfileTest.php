@@ -61,6 +61,37 @@ class ProfileTest extends TestCase
         $this->assertNotNull($user->refresh()->email_verified_at);
     }
 
+    public function test_profile_customization_can_be_updated(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'bio' => 'I collect strange puzzle games.',
+                'avatar_url' => 'https://example.com/avatar.png',
+                'favorite_genre' => 'Puzzle',
+                'profile_color' => 'coral',
+                'profile_visibility' => '1',
+                'show_favorites' => '0',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('I collect strange puzzle games.', $user->bio);
+        $this->assertSame('https://example.com/avatar.png', $user->avatar_url);
+        $this->assertSame('Puzzle', $user->favorite_genre);
+        $this->assertSame('coral', $user->profile_color);
+        $this->assertTrue($user->profile_visibility);
+        $this->assertFalse($user->show_favorites);
+    }
+
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();
