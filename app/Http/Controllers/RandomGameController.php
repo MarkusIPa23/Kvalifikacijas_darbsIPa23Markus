@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GameComment;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
@@ -67,6 +68,7 @@ class RandomGameController extends Controller
         $filters = $this->validatedFilters($request);
         $page = $request->integer('page', 1);
         $catalogue = $this->catalogue($filters, $page);
+        $commentsByGameId = GameComment::with('user')->latest()->get()->groupBy(fn (GameComment $comment): string => (string) $comment->game_id)->map(fn ($comments) => $comments->take(2)->values());
 
         if ($catalogue === null) {
             return view('games', [
@@ -76,6 +78,7 @@ class RandomGameController extends Controller
                 'platforms' => self::PLATFORMS,
                 'orderings' => self::ORDERINGS,
                 'favoriteIds' => $this->favoriteIds($request),
+                'commentsByGameId' => $commentsByGameId->all(),
                 'error' => 'Pašlaik nevarējām saņemt spēļu sarakstu. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
         }
@@ -89,6 +92,7 @@ class RandomGameController extends Controller
             'platforms' => self::PLATFORMS,
             'orderings' => self::ORDERINGS,
             'favoriteIds' => $favoriteIds,
+            'commentsByGameId' => $commentsByGameId->all(),
             'error' => null,
         ]);
     }
@@ -171,6 +175,7 @@ class RandomGameController extends Controller
         return view('random', [
             'game' => $game,
             'isFavorite' => $this->isFavorite($request, $game['id']),
+            'comments' => GameComment::with('user')->where('game_id', (string) $game['id'])->latest()->limit(5)->get(),
             'error' => null,
         ]);
     }

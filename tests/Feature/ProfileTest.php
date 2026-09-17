@@ -92,6 +92,38 @@ class ProfileTest extends TestCase
         $this->assertFalse($user->show_favorites);
     }
 
+    public function test_profile_manager_supports_extended_player_preferences(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'bio' => 'I mostly hunt for co-op adventures.',
+                'favorite_genre' => 'RPG',
+                'preferred_platform' => 'PC',
+                'play_style' => 'Co-op',
+                'gaming_status' => 'Looking for squad',
+                'profile_color' => 'sky',
+                'profile_visibility' => '1',
+                'show_favorites' => '1',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile');
+
+        $user->refresh();
+
+        $this->assertSame('I mostly hunt for co-op adventures.', $user->bio);
+        $this->assertSame('RPG', $user->favorite_genre);
+        $this->assertSame('PC', $user->preferred_platform);
+        $this->assertSame('Co-op', $user->play_style);
+        $this->assertSame('Looking for squad', $user->gaming_status);
+    }
+
     public function test_user_can_delete_their_account(): void
     {
         $user = User::factory()->create();

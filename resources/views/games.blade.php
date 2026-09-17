@@ -42,6 +42,14 @@
         .favorite-button { width: 100%; min-height: 38px; padding: 0 12px; border: 1px solid #e1d9ff; border-radius: 9px; color: var(--purple); background: #f7f5ff; font-size: .8rem; font-weight: bold; cursor: pointer; }
         .favorite-button.is-favorite { border-color: #f2c96d; color: #8a6410; background: #fff8df; }
         .favorite-button:hover { border-color: var(--purple); }
+        .game-comments { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+        .comment-item { margin-bottom: 10px; padding: 9px 10px; border: 1px solid #eef1f7; border-radius: 10px; background: #f9fafc; }
+        .comment-item strong { display: block; margin-bottom: 4px; font-size: .75rem; color: var(--purple); }
+        .comment-item p { margin: 0; color: var(--ink); font-size: .82rem; line-height: 1.5; }
+        .comment-empty, .comment-login { margin: 0 0 10px; color: var(--muted); font-size: .76rem; }
+        .comment-form { margin-top: 12px; }
+        .comment-form textarea { width: 100%; min-height: 70px; padding: 10px 12px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; font: inherit; }
+        .comment-form button { width: 100%; margin-top: 8px; min-height: 36px; padding: 0 12px; border: 0; border-radius: 9px; color: #fff; background: var(--purple); font-size: .8rem; font-weight: bold; cursor: pointer; }
         .notice { margin-top: 35px; padding: 22px; border: 1px solid #f0d997; border-radius: 14px; color: #705622; background: #fff9e9; line-height: 1.55; }
         .empty { margin-top: 35px; padding: 30px; border: 1px dashed #c8d1df; border-radius: 15px; color: var(--muted); background: #fff; text-align: center; }
         .pagination { display: flex; align-items: center; justify-content: center; gap: 15px; margin-top: 35px; }
@@ -149,6 +157,32 @@
                                     {{ isset($favoriteIds[(string) $game['id']]) ? 'Noņemt no favorītiem' : 'Pievienot favorītiem' }}
                                 </button>
                             </form>
+
+                            @php
+                                $gameComments = collect($commentsByGameId[(string) $game['id']] ?? []);
+                            @endphp
+
+                            <div class="game-comments">
+                                @auth
+                                    @forelse ($gameComments as $comment)
+                                        <div class="comment-item">
+                                            <strong>{{ $comment->user->name }}</strong>
+                                            <p>{{ $comment->body }}</p>
+                                        </div>
+                                    @empty
+                                        <p class="comment-empty">Vēl nav komentāru.</p>
+                                    @endforelse
+
+                                    <form action="{{ route('games.comments.store', ['gameId' => $game['id']]) }}" method="POST" class="comment-form">
+                                        @csrf
+                                        <input type="hidden" name="game_title" value="{{ $game['title'] }}">
+                                        <textarea name="body" rows="2" maxlength="500" placeholder="Atstāj komentāru..." required></textarea>
+                                        <button type="submit">Publicēt</button>
+                                    </form>
+                                @else
+                                    <p class="comment-login">Pieraksties, lai atstātu komentāru.</p>
+                                @endauth
+                            </div>
                         </div>
                     </article>
                 @endforeach

@@ -32,6 +32,16 @@
         .game-link:hover, .new-game:hover { background: var(--purple-dark); color: #fff; }
         .favorite-button { display: inline-block; padding: 12px 17px; border: 0; border-radius: 10px; color: #8a6410; background: #fff8df; font: inherit; font-weight: bold; cursor: pointer; }
         .favorite-button.is-favorite { color: var(--purple); background: #f0edff; }
+        .comment-panel { margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 14px 30px rgba(35, 49, 78, .06); }
+        .comment-panel h3 { margin: 0 0 16px; font-size: 1.1rem; }
+        .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .comment-item { padding: 12px 14px; border: 1px solid #eef1f7; border-radius: 10px; background: #f9fafc; }
+        .comment-item strong { display: block; margin-bottom: 4px; color: var(--purple); font-size: .76rem; }
+        .comment-item p { margin: 0; color: var(--ink); line-height: 1.5; }
+        .comment-form { display: flex; flex-direction: column; gap: 8px; }
+        .comment-form textarea { width: 100%; min-height: 80px; padding: 10px 12px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; font: inherit; }
+        .comment-form button { align-self: flex-start; padding: 10px 16px; border: 0; border-radius: 10px; color: #fff; background: var(--purple); font-weight: bold; cursor: pointer; }
+        .comment-empty, .comment-login { color: var(--muted); font-size: .82rem; }
         .notice { padding: 22px; border: 1px solid #f0d997; border-radius: 14px; color: #705622; background: #fff9e9; line-height: 1.55; }
         .source { margin: 25px 0 0; color: #778298; font-size: .8rem; text-align: right; }
         .source a { color: inherit; }
@@ -85,6 +95,34 @@
                     </div>
                 </div>
             </article>
+
+            <div class="comment-panel">
+                <h3>Komentāri</h3>
+
+                @auth
+                    @if ($comments->isNotEmpty())
+                        <div class="comment-list">
+                            @foreach ($comments as $comment)
+                                <div class="comment-item">
+                                    <strong>{{ $comment->user->name }}</strong>
+                                    <p>{{ $comment->body }}</p>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="comment-empty">Vēl nav komentāru. Būt pirmajam!</p>
+                    @endif
+
+                    <form action="{{ route('games.comments.store', ['gameId' => $game['id']]) }}" method="POST" class="comment-form">
+                        @csrf
+                        <input type="hidden" name="game_title" value="{{ $game['title'] }}">
+                        <textarea name="body" maxlength="500" placeholder="Atstāj savu komentāru..." required></textarea>
+                        <button type="submit">Publicēt komentāru</button>
+                    </form>
+                @else
+                    <p class="comment-login">Pieraksties, lai atstātu komentāru.</p>
+                @endauth
+            </div>
         @else
             <p class="notice">{{ $error }}</p>
         @endif

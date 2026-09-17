@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GameCommentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RandomGameController;
 use Illuminate\Http\Request;
@@ -15,12 +16,11 @@ Route::get('/', function (Request $request) {
 })->name('home');
 
 Route::get('/games', [RandomGameController::class, 'search'])->name('games.search');
+Route::post('/games/{gameId}/comments', [GameCommentController::class, 'store'])
+    ->middleware('auth')
+    ->name('games.comments.store');
 Route::post('/favorites/toggle', [RandomGameController::class, 'toggleFavorite'])->name('favorites.toggle');
 Route::get('/random', [RandomGameController::class, 'random'])->name('games.random');
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

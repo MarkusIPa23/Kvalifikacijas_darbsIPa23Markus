@@ -52,4 +52,19 @@ class RegistrationTest extends TestCase
             User::where('email', 'test@example.com')->firstOrFail()->favorite_games,
         );
     }
+
+    public function test_logged_in_user_sees_their_name_in_the_navigation(): void
+    {
+        $user = User::factory()->create([
+            'name' => 'Anna Andersone',
+            'email' => 'anna@example.com',
+        ]);
+
+        $response = $this->actingAs($user)->get('/');
+
+        $response->assertOk();
+        $response->assertSee('Anna Andersone');
+        $response->assertDontSee('Mans profils');
+        $response->assertDontSee('Dashboard');
+    }
 }

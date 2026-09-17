@@ -20,7 +20,7 @@
             </a>
             <nav class="site-nav" aria-label="Galvenā navigācija">
                 @auth
-                    <a href="{{ route('dashboard') }}">Mans profils</a>
+                    <a href="{{ route('profile.edit') }}">{{ Auth::user()->name }}</a>
                 @else
                     <a href="{{ route('login') }}">Pieteikties</a>
                     <a class="nav-cta" href="{{ route('register') }}">Reģistrēties</a>

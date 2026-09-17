@@ -1,11 +1,25 @@
 <x-app-layout>
     @php
         $profileGradient = match ($user->profile_color) {
-            'coral' => 'from-rose-600 via-orange-600 to-amber-600',
-            'amber' => 'from-amber-600 via-yellow-600 to-orange-600',
-            'sky' => 'from-sky-600 via-cyan-600 to-blue-600',
-            default => 'from-teal-700 via-cyan-700 to-sky-700',
+            'coral' => 'from-rose-600 via-fuchsia-600 to-purple-700',
+            'amber' => 'from-amber-500 via-orange-600 to-rose-600',
+            'sky' => 'from-indigo-600 via-blue-600 to-cyan-600',
+            default => 'from-purple-700 via-violet-600 to-indigo-700',
         };
+    @endphp
+
+    @php
+        $profileCompletionFields = [
+            $user->name,
+            $user->email,
+            $user->bio,
+            $user->avatar_url,
+            $user->favorite_genre,
+            $user->preferred_platform,
+            $user->play_style,
+            $user->gaming_status,
+        ];
+        $profileCompletion = (int) round(collect($profileCompletionFields)->filter()->count() / count($profileCompletionFields) * 100);
     @endphp
 
     <x-slot name="header">
@@ -18,12 +32,20 @@
         </div>
     </x-slot>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-            <div class="overflow-hidden rounded-xl bg-gradient-to-r {{ $profileGradient }} shadow-lg">
-                <div class="flex flex-col gap-6 p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
-                    <div class="flex items-center gap-5">
-                        <div class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-white/30 bg-white/20 text-2xl font-bold">
+    <div
+        class="profile-page"
+        x-data="{
+            previewName: @js(old('name', $user->name)),
+            previewBio: @js(old('bio', $user->bio ?? '')),
+            previewAvatar: @js(old('avatar_url', $user->avatar_url ?? '')),
+            previewColor: @js(old('profile_color', $user->profile_color ?? 'teal'))
+        }"
+    >
+        <div class="profile-shell">
+            <div class="profile-hero {{ $profileGradient }}">
+                <div class="profile-hero-inner">
+                    <div class="profile-hero-profile">
+                        <div class="profile-avatar">
                             @if ($user->avatar_url)
                                 <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="h-full w-full object-cover">
                             @else
@@ -31,46 +53,105 @@
                             @endif
                         </div>
                         <div>
-                            <p class="text-sm font-medium text-cyan-100">{{ __('Welcome back') }}</p>
-                            <h1 class="text-3xl font-bold">{{ $user->name }}</h1>
-                            <p class="mt-1 text-sm text-cyan-100">{{ $user->favorite_genre ?: __('Game explorer') }}</p>
+                            <p class="profile-kicker">{{ __('Welcome back') }}</p>
+                            <h1>{{ $user->name }}</h1>
+                            <p class="profile-subtitle">{{ $user->favorite_genre ?: __('Game explorer') }}</p>
                         </div>
                     </div>
-                    <div class="flex gap-8 text-sm">
-                        <div>
-                            <p class="text-2xl font-bold">{{ count($user->favorite_games ?? []) }}</p>
-                            <p class="text-cyan-100">{{ __('Favorites') }}</p>
+
+                    <div class="profile-hero-stats">
+                        <div class="profile-stat">
+                            <strong>{{ count($user->favorite_games ?? []) }}</strong>
+                            <span>{{ __('Favorites') }}</span>
                         </div>
-                        <div>
-                            <p class="text-2xl font-bold">{{ $user->profile_visibility ? __('On') : __('Off') }}</p>
-                            <p class="text-cyan-100">{{ __('Public profile') }}</p>
+                        <div class="profile-stat">
+                            <strong>{{ $user->profile_visibility ? __('On') : __('Off') }}</strong>
+                            <span>{{ __('Public profile') }}</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
+            <div class="profile-layout">
+                <div class="profile-main-column">
+                    <div class="profile-panel">
+                        @include('profile.partials.update-profile-information-form')
+                    </div>
 
-            <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.customize-profile-form')
+                    <div class="profile-panel">
+                        @include('profile.partials.customize-profile-form')
+                    </div>
                 </div>
-            </div>
 
-            <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
+                <aside class="profile-sidebar">
+                    <div class="profile-panel profile-preview-card">
+                        <div class="profile-sidebar-header">
+                            <p class="eyebrow">LIVE PREVIEW</p>
+                            <h3>{{ __('Your player card') }}</h3>
+                        </div>
+                        <div class="profile-preview" :class="`profile-preview-${previewColor}`">
+                            <div class="profile-preview-avatar">
+                                <img x-show="previewAvatar" :src="previewAvatar" :alt="previewName" class="h-full w-full object-cover">
+                                <span x-show="!previewAvatar" x-text="(previewName || 'P').charAt(0).toUpperCase()"></span>
+                            </div>
+                            <div class="profile-preview-copy">
+                                <strong x-text="previewName || 'Player name'"></strong>
+                                <span x-text="previewBio || 'Add a short bio to introduce yourself.'"></span>
+                            </div>
+                        </div>
+                        <div class="profile-completion">
+                            <div class="profile-completion-heading">
+                                <span>{{ __('Profile completeness') }}</span>
+                                <strong>{{ $profileCompletion }}%</strong>
+                            </div>
+                            <div class="profile-progress" role="progressbar" aria-label="Profile completeness" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ $profileCompletion }}">
+                                <span style="width: {{ $profileCompletion }}%"></span>
+                            </div>
+                            <p>{{ __('Complete the essentials so other players know what you enjoy.') }}</p>
+                        </div>
+                    </div>
 
-            <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-700 sm:p-8">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
+                    <div class="profile-panel profile-sidebar-card">
+                        <div class="profile-sidebar-header">
+                            <p class="eyebrow">STATUS</p>
+                            <h3>{{ __('Player overview') }}</h3>
+                        </div>
+                        <ul class="profile-mini-list">
+                            <li>
+                                <span>{{ __('Favorite genre') }}</span>
+                                <strong>{{ $user->favorite_genre ?: __('Not chosen') }}</strong>
+                            </li>
+                            <li>
+                                <span>{{ __('Platform') }}</span>
+                                <strong>{{ $user->preferred_platform ?: __('Not chosen') }}</strong>
+                            </li>
+                            <li>
+                                <span>{{ __('Play style') }}</span>
+                                <strong>{{ $user->play_style ?: __('Not chosen') }}</strong>
+                            </li>
+                            <li>
+                                <span>{{ __('Status') }}</span>
+                                <strong>{{ $user->gaming_status ?: __('Not chosen') }}</strong>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="profile-panel profile-sidebar-card">
+                        <div class="profile-sidebar-header">
+                            <p class="eyebrow">QUICK TOOLS</p>
+                            <h3>{{ __('Profile tools') }}</h3>
+                        </div>
+                        <div class="profile-tool-list">
+                            <span>{{ __('Public profile') }}: {{ $user->profile_visibility ? __('On') : __('Off') }}</span>
+                            <span>{{ __('Favorites shared') }}: {{ $user->show_favorites ? __('Yes') : __('No') }}</span>
+                            <span>{{ __('Accent') }}: {{ ucfirst($user->profile_color ?? 'teal') }}</span>
+                        </div>
+                    </div>
+
+                    <div class="profile-panel profile-sidebar-card danger-panel">
+                        @include('profile.partials.delete-user-form')
+                    </div>
+                </aside>
             </div>
         </div>
     </div>
