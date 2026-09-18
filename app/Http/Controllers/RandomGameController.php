@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GameComment;
+use App\Models\GameRating;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
@@ -69,6 +70,7 @@ class RandomGameController extends Controller
         $page = $request->integer('page', 1);
         $catalogue = $this->catalogue($filters, $page);
         $commentsByGameId = GameComment::with('user')->latest()->get()->groupBy(fn (GameComment $comment): string => (string) $comment->game_id)->map(fn ($comments) => $comments->take(2)->values());
+        $ratingsByGameId = $this->ratingsByGameId($request, $catalogue['games'] ?? collect());
 
         if ($catalogue === null) {
             return view('games', [
@@ -79,6 +81,7 @@ class RandomGameController extends Controller
                 'orderings' => self::ORDERINGS,
                 'favoriteIds' => $this->favoriteIds($request),
                 'commentsByGameId' => $commentsByGameId->all(),
+                'ratingsByGameId' => $ratingsByGameId,
                 'error' => 'Pašlaik nevarējām saņemt spēļu sarakstu. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
         }
@@ -93,6 +96,7 @@ class RandomGameController extends Controller
             'orderings' => self::ORDERINGS,
             'favoriteIds' => $favoriteIds,
             'commentsByGameId' => $commentsByGameId->all(),
+            'ratingsByGameId' => $ratingsByGameId,
             'error' => null,
         ]);
     }
@@ -175,6 +179,7 @@ class RandomGameController extends Controller
         return view('random', [
             'game' => $game,
             'isFavorite' => $this->isFavorite($request, $game['id']),
+            'ratingsByGameId' => $this->ratingsByGameId($request, collect([$game])),
             'comments' => GameComment::with('user')->where('game_id', (string) $game['id'])->latest()->limit(5)->get(),
             'error' => null,
         ]);
@@ -278,6 +283,36 @@ class RandomGameController extends Controller
     private function isFavorite(Request $request, int $gameId): bool
     {
         return array_key_exists((string) $gameId, $this->favorites($request));
+    }
+
+    /**
+     * @param  Collection<int, array<string, mixed>>  $games
+     * @return array<string, array{average: float, count: int, userRating: ?int}>
+     */
+    private function ratingsByGameId(Request $request, Collection $games): array
+    {
+        $gameIds = $games->pluck('id')->map(fn (mixed $gameId): string => (string) $gameId)->values();
+
+        if ($gameIds->isEmpty()) {
+            return [];
+        }
+
+        return GameRating::query()
+            ->whereIn('game_id', $gameIds)
+            ->get()
+            ->groupBy('game_id')
+            ->map(function (Collection $ratings) use ($request): array {
+                $userRating = $request->user()
+                    ? $ratings->firstWhere('user_id', $request->user()->id)?->rating
+                    : null;
+
+                return [
+                    'average' => round((float) $ratings->avg('rating'), 1),
+                    'count' => $ratings->count(),
+                    'userRating' => $userRating,
+                ];
+            })
+            ->all();
     }
 
     /** @return array<string, array<string, mixed>> */

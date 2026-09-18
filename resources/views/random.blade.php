@@ -32,6 +32,13 @@
         .game-link:hover, .new-game:hover { background: var(--purple-dark); color: #fff; }
         .favorite-button { display: inline-block; padding: 12px 17px; border: 0; border-radius: 10px; color: #8a6410; background: #fff8df; font: inherit; font-weight: bold; cursor: pointer; }
         .favorite-button.is-favorite { color: var(--purple); background: #f0edff; }
+        .rating-panel { margin-top: 20px; padding: 16px; border: 1px solid #ebe7ff; border-radius: 12px; background: #fbfaff; }
+        .rating-summary { margin: 0 0 10px; font-weight: bold; }
+        .rating-form { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+        .rating-form label { color: var(--muted); font-size: .85rem; font-weight: bold; }
+        .rating-form select { min-height: 38px; padding: 0 8px; border: 1px solid #d9e0eb; border-radius: 8px; color: var(--ink); background: #fff; font: inherit; }
+        .rating-form button { min-height: 38px; padding: 0 13px; border: 0; border-radius: 8px; color: #fff; background: var(--purple); font: inherit; font-weight: bold; cursor: pointer; }
+        .rating-login { margin: 0; color: var(--muted); font-size: .85rem; }
         .comment-panel { margin-top: 22px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 14px 30px rgba(35, 49, 78, .06); }
         .comment-panel h3 { margin: 0 0 16px; font-size: 1.1rem; }
         .comment-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
@@ -92,6 +99,30 @@
                                 {{ $isFavorite ? 'Noņemt no favorītiem' : 'Pievienot favorītiem' }}
                             </button>
                         </form>
+                    </div>
+
+                    @php
+                        $gameRating = $ratingsByGameId[(string) $game['id']] ?? null;
+                    @endphp
+                    <div class="rating-panel">
+                        <p class="rating-summary">
+                            {{ $gameRating ? 'Lietotāju vērtējums: '.number_format($gameRating['average'], 1).'/10 ('.$gameRating['count'].')' : 'Šo spēli vēl neviens nav novērtējis.' }}
+                        </p>
+                        @auth
+                            <form action="{{ route('games.ratings.store', ['gameId' => $game['id']]) }}" method="POST" class="rating-form">
+                                @csrf
+                                <input type="hidden" name="game_title" value="{{ $game['title'] }}">
+                                <label for="random-rating-{{ $game['id'] }}">Tavs vērtējums</label>
+                                <select id="random-rating-{{ $game['id'] }}" name="rating" required>
+                                    @for ($rating = 1; $rating <= 10; $rating++)
+                                        <option value="{{ $rating }}" @selected(($gameRating['userRating'] ?? null) === $rating)>{{ $rating }}/10</option>
+                                    @endfor
+                                </select>
+                                <button type="submit">Novērtēt</button>
+                            </form>
+                        @else
+                            <p class="rating-login">Pieraksties, lai novērtētu spēli.</p>
+                        @endauth
                     </div>
                 </div>
             </article>

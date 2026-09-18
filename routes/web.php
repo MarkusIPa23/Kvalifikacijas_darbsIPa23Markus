@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\GameCommentController;
+use App\Http\Controllers\GameRatingController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RandomGameController;
 use Illuminate\Http\Request;
@@ -19,6 +20,9 @@ Route::get('/games', [RandomGameController::class, 'search'])->name('games.searc
 Route::post('/games/{gameId}/comments', [GameCommentController::class, 'store'])
     ->middleware('auth')
     ->name('games.comments.store');
+Route::post('/games/{gameId}/ratings', [GameRatingController::class, 'store'])
+    ->middleware('auth')
+    ->name('games.ratings.store');
 Route::post('/favorites/toggle', [RandomGameController::class, 'toggleFavorite'])->name('favorites.toggle');
 Route::get('/random', [RandomGameController::class, 'random'])->name('games.random');
 

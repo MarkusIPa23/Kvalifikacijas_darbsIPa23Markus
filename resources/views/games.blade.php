@@ -42,6 +42,13 @@
         .favorite-button { width: 100%; min-height: 38px; padding: 0 12px; border: 1px solid #e1d9ff; border-radius: 9px; color: var(--purple); background: #f7f5ff; font-size: .8rem; font-weight: bold; cursor: pointer; }
         .favorite-button.is-favorite { border-color: #f2c96d; color: #8a6410; background: #fff8df; }
         .favorite-button:hover { border-color: var(--purple); }
+        .rating-panel { margin-top: 14px; padding: 12px; border: 1px solid #ebe7ff; border-radius: 10px; background: #fbfaff; }
+        .rating-summary { margin: 0 0 9px; color: var(--ink); font-size: .8rem; font-weight: bold; }
+        .rating-form { display: flex; align-items: center; gap: 8px; }
+        .rating-form label { margin: 0; color: var(--muted); font-size: .76rem; }
+        .rating-form select { width: auto; min-width: 66px; height: 34px; padding: 0 8px; font-size: .8rem; }
+        .rating-form button { min-height: 34px; padding: 0 10px; border-radius: 8px; font-size: .76rem; }
+        .rating-login { margin: 0; color: var(--muted); font-size: .76rem; }
         .game-comments { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .comment-item { margin-bottom: 10px; padding: 9px 10px; border: 1px solid #eef1f7; border-radius: 10px; background: #f9fafc; }
         .comment-item strong { display: block; margin-bottom: 4px; font-size: .75rem; color: var(--purple); }
@@ -157,6 +164,31 @@
                                     {{ isset($favoriteIds[(string) $game['id']]) ? 'Noņemt no favorītiem' : 'Pievienot favorītiem' }}
                                 </button>
                             </form>
+
+                            @php
+                                $gameRating = $ratingsByGameId[(string) $game['id']] ?? null;
+                            @endphp
+
+                            <div class="rating-panel">
+                                <p class="rating-summary">
+                                    {{ $gameRating ? 'Lietotāju vērtējums: '.number_format($gameRating['average'], 1).'/10 ('.$gameRating['count'].')' : 'Šo spēli vēl neviens nav novērtējis.' }}
+                                </p>
+                                @auth
+                                    <form action="{{ route('games.ratings.store', ['gameId' => $game['id']]) }}" method="POST" class="rating-form">
+                                        @csrf
+                                        <input type="hidden" name="game_title" value="{{ $game['title'] }}">
+                                        <label for="rating-{{ $game['id'] }}">Tavs vērtējums</label>
+                                        <select id="rating-{{ $game['id'] }}" name="rating" required>
+                                            @for ($rating = 1; $rating <= 10; $rating++)
+                                                <option value="{{ $rating }}" @selected(($gameRating['userRating'] ?? null) === $rating)>{{ $rating }}/10</option>
+                                            @endfor
+                                        </select>
+                                        <button type="submit">Novērtēt</button>
+                                    </form>
+                                @else
+                                    <p class="rating-login">Pieraksties, lai novērtētu spēli.</p>
+                                @endauth
+                            </div>
 
                             @php
                                 $gameComments = collect($commentsByGameId[(string) $game['id']] ?? []);
