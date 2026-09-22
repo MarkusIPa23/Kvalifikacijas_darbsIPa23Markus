@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class GameRatingsTest extends TestCase
@@ -12,6 +13,7 @@ class GameRatingsTest extends TestCase
 
     public function test_registered_user_can_rate_a_game_from_one_to_ten(): void
     {
+        $this->fakeRawgGame();
         $user = User::factory()->create();
 
         $response = $this
@@ -35,6 +37,7 @@ class GameRatingsTest extends TestCase
 
     public function test_registered_user_can_update_their_game_rating(): void
     {
+        $this->fakeRawgGame();
         $user = User::factory()->create();
         $user->gameRatings()->create([
             'game_id' => '4200',
@@ -73,5 +76,29 @@ class GameRatingsTest extends TestCase
             ->assertSessionHasErrors('rating');
 
         $this->assertDatabaseCount('game_ratings', 0);
+    }
+
+    public function test_rating_requires_a_game_from_rawg(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/999999*' => Http::response([], 404),
+        ]);
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post('/games/999999/ratings', ['rating' => 8])
+            ->assertSessionHasErrors('gameId');
+
+        $this->assertDatabaseCount('game_ratings', 0);
+    }
+
+    private function fakeRawgGame(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/4200*' => Http::response(['id' => 4200]),
+        ]);
     }
 }

@@ -69,7 +69,7 @@ class RandomGameController extends Controller
         $filters = $this->validatedFilters($request);
         $page = $request->integer('page', 1);
         $catalogue = $this->catalogue($filters, $page);
-        $commentsByGameId = GameComment::with('user')->latest()->get()->groupBy(fn (GameComment $comment): string => (string) $comment->game_id)->map(fn ($comments) => $comments->take(2)->values());
+        $commentsByGameId = $this->commentsByGameId($request, $catalogue['games'] ?? collect());
         $ratingsByGameId = $this->ratingsByGameId($request, $catalogue['games'] ?? collect());
 
         if ($catalogue === null) {
@@ -80,7 +80,7 @@ class RandomGameController extends Controller
                 'platforms' => self::PLATFORMS,
                 'orderings' => self::ORDERINGS,
                 'favoriteIds' => $this->favoriteIds($request),
-                'commentsByGameId' => $commentsByGameId->all(),
+                'commentsByGameId' => $commentsByGameId,
                 'ratingsByGameId' => $ratingsByGameId,
                 'error' => 'Pašlaik nevarējām saņemt spēļu sarakstu. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
@@ -95,7 +95,7 @@ class RandomGameController extends Controller
             'platforms' => self::PLATFORMS,
             'orderings' => self::ORDERINGS,
             'favoriteIds' => $favoriteIds,
-            'commentsByGameId' => $commentsByGameId->all(),
+            'commentsByGameId' => $commentsByGameId,
             'ratingsByGameId' => $ratingsByGameId,
             'error' => null,
         ]);
@@ -312,6 +312,33 @@ class RandomGameController extends Controller
                     'userRating' => $userRating,
                 ];
             })
+            ->all();
+    }
+
+    /**
+     * Load comments only for games visible on the current catalogue page.
+     *
+     * @param  Collection<int, array<string, mixed>>  $games
+     * @return array<string, Collection<int, GameComment>>
+     */
+    private function commentsByGameId(Request $request, Collection $games): array
+    {
+        if ($request->user() === null) {
+            return [];
+        }
+
+        $gameIds = $games->pluck('id')->map(fn (mixed $gameId): string => (string) $gameId)->values();
+
+        if ($gameIds->isEmpty()) {
+            return [];
+        }
+
+        return GameComment::with('user')
+            ->whereIn('game_id', $gameIds)
+            ->latest()
+            ->get()
+            ->groupBy(fn (GameComment $comment): string => (string) $comment->game_id)
+            ->map(fn (Collection $comments): Collection => $comments->take(2)->values())
             ->all();
     }
 

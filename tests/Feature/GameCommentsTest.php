@@ -13,6 +13,7 @@ class GameCommentsTest extends TestCase
 
     public function test_registered_user_can_leave_a_comment_on_a_game(): void
     {
+        $this->fakeRawgGame();
         $user = User::factory()->create();
 
         $response = $this
@@ -44,6 +45,35 @@ class GameCommentsTest extends TestCase
             ]);
 
         $response->assertRedirect('/login');
+    }
+
+    public function test_comment_cannot_contain_only_whitespace(): void
+    {
+        $this->fakeRawgGame();
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post('/games/4200/comments', ['body' => '   '])
+            ->assertSessionHasErrors('body');
+
+        $this->assertDatabaseCount('game_comments', 0);
+    }
+
+    public function test_comment_requires_a_game_from_rawg(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/999999*' => Http::response([], 404),
+        ]);
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post('/games/999999/comments', ['body' => 'Not a real game'])
+            ->assertSessionHasErrors('gameId');
+
+        $this->assertDatabaseCount('game_comments', 0);
     }
 
     public function test_all_registered_users_can_see_comments_on_the_games_page(): void
@@ -95,5 +125,13 @@ class GameCommentsTest extends TestCase
         $this
             ->get('/games')
             ->assertDontSee('Members-only comment.');
+    }
+
+    private function fakeRawgGame(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/4200*' => Http::response(['id' => 4200]),
+        ]);
     }
 }
