@@ -25,6 +25,7 @@
                     <a href="{{ route('login') }}">Pieteikties</a>
                     <a class="nav-cta" href="{{ route('register') }}">Reģistrēties</a>
                 @endauth
+                <a href="{{ route('future') }}">Nākotne</a>
                 <a class="nav-cta" href="{{ route('games.search') }}">🎮</a>
             </nav>
         </header>
@@ -87,6 +88,43 @@
                 </div>
             </section>
 
+            <section class="quick-tools" aria-labelledby="quick-tools-title">
+                <div class="quick-tools-heading">
+                    <div>
+                        <p class="eyebrow">ĀTRĀ PIEKĻUVE</p>
+                        <h2 id="quick-tools-title">Izvēlies, ko vēlies izmēģināt.</h2>
+                    </div>
+                    <p>Visas jaunās funkcijas ir pieejamas ar vienu pogu.</p>
+                </div>
+                <div class="quick-tools-grid">
+                    <a class="quick-tool-button" href="{{ route('future.hybrid') }}">
+                        <span class="quick-tool-icon" aria-hidden="true">⭐</span>
+                        <span><strong>Hibrīda veidotājs</strong><small>Izveido savu spēļu atlasi</small></span>
+                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-tool-button" href="{{ route('future.random') }}">
+                        <span class="quick-tool-icon" aria-hidden="true">↻</span>
+                        <span><strong>Adaptive random</strong><small>Atrodi spēli pēc noskaņojuma</small></span>
+                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-tool-button" href="{{ route('future.comparison') }}">
+                        <span class="quick-tool-icon" aria-hidden="true">⇄</span>
+                        <span><strong>Salīdzināšana</strong><small>Novērtē divas spēles</small></span>
+                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-tool-button" href="{{ route('future.matches') }}">
+                        <span class="quick-tool-icon" aria-hidden="true">%</span>
+                        <span><strong>Atbilstības rādītāji</strong><small>Skaties savus labākos match</small></span>
+                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                    </a>
+                    <a class="quick-tool-button" href="{{ route('future.tournament') }}">
+                        <span class="quick-tool-icon" aria-hidden="true">⚔</span>
+                        <span><strong>Turnīrs</strong><small>Izvēlies savu uzvarētāju</small></span>
+                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                    </a>
+                </div>
+            </section>
+
             <section class="favorites-section" id="favoriti" aria-labelledby="favorites-title">
                 <div class="section-heading">
                     <p class="eyebrow">Mani FAviņi</p>
@@ -128,53 +166,7 @@
                 @endif
             </section>
 
-            <section class="future-section" aria-labelledby="future-title">
-                <div class="section-heading">
-                    <p class="eyebrow">NĀKOTNĒ:)</p>
-                    <h2 id="future-title">Tas viss nakotne?!?!?</h2>
-                </div>
-                <div class="future-grid">
-                    <article class="future-card">
-                        <span class="future-icon" aria-hidden="true">⭐</span>
-                        <h3>Spēļu hibrīda veidotājs</h3>
-                        <p>Lietotājs izvēlas 2–5 spēles, un sistēma apvieno to žanrus, spēles tipu, platformas, mehānikas un citas īpašības vienā hibrīda spēles konceptā.</p>
-                    </article>
-                    <article class="future-card">
-                        <span class="future-icon" aria-hidden="true">↻</span>
-                        <h3>Pielāgojams Random</h3>
-                        <p>Lietotājs izvēlas žanru, platformu un izdošanas periodu, un sistēma nejauši izvēlas spēli, kas atbilst kritērijiem.</p>
-                    </article>
-                    <article class="future-card">
-                        <span class="future-icon" aria-hidden="true">⇄</span>
-                        <h3>Spēļu salīdzināšana</h3>
-                        <p>Lietotājs izvēlas 2–3 spēles, un sistēma tās salīdzina pēc žanra, platformas, izdošanas gada, vērtējuma un citām īpašībām.</p>
-                    </article>
-                    <article class="future-card">
-                        <span class="future-icon" aria-hidden="true">%</span>
-                        <h3>Spēles atbilstības procenti</h3>
-                        <p>Lietotājs izvēlas savas preferences, un sistēma katrai spēlei aprēķina atbilstību, piemēram, 85%, balstoties uz kritērijiem.</p>
-                    </article>
-                    <article class="future-card">
-                        <span class="future-icon" aria-hidden="true">⚔</span>
-                        <h3>Spēļu izvēles turnīrs</h3>
-                        <p>Sistēma parāda divas spēles, lietotājs izvēlas vienu, un pēc vairākām kārtām tiek atrasta labākā izvēle.</p>
-                    </article>
-                </div>
-            </section>
         </main>
+
     </div>
-    <script>
-        const carousel = document.querySelector('[data-game-carousel]');
-        const slides = carousel ? [...carousel.querySelectorAll('.game-slide')] : [];
-
-        if (slides.length > 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            let activeSlide = 0;
-
-            window.setInterval(() => {
-                slides[activeSlide].classList.remove('is-active');
-                activeSlide = (activeSlide + 1) % slides.length;
-                slides[activeSlide].classList.add('is-active');
-            }, 4500);
-        }
-    </script>
 </body>

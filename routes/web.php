@@ -16,6 +16,30 @@ Route::get('/', function (Request $request) {
     ]);
 })->name('home');
 
+Route::get('/future', function () {
+    return view('future.index');
+})->name('future');
+
+Route::get('/future/hybrid', function () {
+    return view('future.hybrid');
+})->name('future.hybrid');
+
+Route::get('/future/random', function () {
+    return view('future.random');
+})->name('future.random');
+
+Route::get('/future/comparison', function () {
+    return view('future.comparison');
+})->name('future.comparison');
+
+Route::get('/future/matches', function () {
+    return view('future.matches');
+})->name('future.matches');
+
+Route::get('/future/tournament', function () {
+    return view('future.tournament');
+})->name('future.tournament');
+
 Route::get('/games', [RandomGameController::class, 'search'])->name('games.search');
 Route::post('/games/{gameId}/comments', [GameCommentController::class, 'store'])
     ->middleware('auth')
