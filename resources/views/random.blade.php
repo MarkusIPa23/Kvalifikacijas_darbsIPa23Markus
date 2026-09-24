@@ -83,7 +83,7 @@
                     </div>
                     <div class="actions">
                         <a class="action new-game" href="{{ route('games.random') }}">Parādīt citu spēli</a>
-                        <a class="action game-link" href="{{ $game['url'] }}" target="_blank" rel="noopener noreferrer">Apskatīt RAWG →</a>
+                        <a class="action game-link" href="{{ route('games.show', ['gameId' => $game['id']]) }}">Apskatīt spēli →</a>
                         <form action="{{ route('favorites.toggle') }}" method="POST">
                             @csrf
                             <input type="hidden" name="id" value="{{ $game['id'] }}">

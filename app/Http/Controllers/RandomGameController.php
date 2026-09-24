@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GameComment;
 use App\Models\GameRating;
+use App\Services\RawgGameService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\RedirectResponse;
@@ -131,6 +132,26 @@ class RandomGameController extends Controller
         }
 
         return back();
+    }
+
+    public function show(Request $request, int $gameId, RawgGameService $rawgGameService): View
+    {
+        $payload = $rawgGameService->find($gameId);
+
+        abort_if($payload === null, 404);
+
+        $game = $this->normalizeGame($payload);
+
+        return view('game', [
+            'game' => $game,
+            'isFavorite' => $this->isFavorite($request, $game['id']),
+            'ratingsByGameId' => $this->ratingsByGameId($request, collect([$game])),
+            'comments' => GameComment::with('user')
+                ->where('game_id', (string) $game['id'])
+                ->latest()
+                ->limit(5)
+                ->get(),
+        ]);
     }
 
     /**

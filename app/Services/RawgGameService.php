@@ -9,6 +9,34 @@ use Illuminate\Support\Facades\Http;
 
 class RawgGameService
 {
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function find(int $gameId): ?array
+    {
+        if (blank(config('services.rawg.key'))) {
+            return null;
+        }
+
+        return Cache::remember(
+            "rawg.game.{$gameId}",
+            now()->addMinutes(15),
+            function () use ($gameId): ?array {
+                try {
+                    return Http::baseUrl(config('services.rawg.url'))
+                        ->acceptJson()
+                        ->connectTimeout(3)
+                        ->timeout(10)
+                        ->get("games/{$gameId}", ['key' => config('services.rawg.key')])
+                        ->throw()
+                        ->json();
+                } catch (ConnectionException|RequestException) {
+                    return null;
+                }
+            },
+        );
+    }
+
     public function exists(int $gameId): bool
     {
         if (blank(config('services.rawg.key'))) {

@@ -41,6 +41,9 @@ Route::get('/future/tournament', function () {
 })->name('future.tournament');
 
 Route::get('/games', [RandomGameController::class, 'search'])->name('games.search');
+Route::get('/games/{gameId}', [RandomGameController::class, 'show'])
+    ->whereNumber('gameId')
+    ->name('games.show');
 Route::post('/games/{gameId}/comments', [GameCommentController::class, 'store'])
     ->middleware('auth')
     ->name('games.comments.store');
