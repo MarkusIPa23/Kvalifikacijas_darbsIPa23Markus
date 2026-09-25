@@ -159,11 +159,16 @@ class RandomGameController extends Controller
      */
     public function random(Request $request): View
     {
-        $total = $this->totalGames();
+        $filters = $this->validatedFilters($request);
+        $total = $this->totalGames($filters);
 
         if ($total === null || $total === 0) {
             return view('random', [
                 'game' => null,
+                'filters' => $filters,
+                'genres' => self::GENRES,
+                'platforms' => self::PLATFORMS,
+                'orderings' => self::ORDERINGS,
                 'error' => 'Pašlaik nevarējām saņemt nejaušu spēli. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
         }
@@ -173,7 +178,7 @@ class RandomGameController extends Controller
         $game = null;
 
         for ($attempt = 0; $attempt < 5 && $game === null; $attempt++) {
-            $catalogue = $this->catalogue([], random_int(1, $maxPage));
+            $catalogue = $this->catalogue($filters, random_int(1, $maxPage));
 
             if ($catalogue === null || $catalogue['games']->isEmpty()) {
                 continue;
@@ -191,6 +196,10 @@ class RandomGameController extends Controller
         if ($game === null) {
             return view('random', [
                 'game' => null,
+                'filters' => $filters,
+                'genres' => self::GENRES,
+                'platforms' => self::PLATFORMS,
+                'orderings' => self::ORDERINGS,
                 'error' => 'Pašlaik nevarējām saņemt nejaušu spēli. Lūdzu, pamēģini vēlreiz pēc brīža.',
             ]);
         }
@@ -199,6 +208,10 @@ class RandomGameController extends Controller
 
         return view('random', [
             'game' => $game,
+            'filters' => $filters,
+            'genres' => self::GENRES,
+            'platforms' => self::PLATFORMS,
+            'orderings' => self::ORDERINGS,
             'isFavorite' => $this->isFavorite($request, $game['id']),
             'ratingsByGameId' => $this->ratingsByGameId($request, collect([$game])),
             'comments' => GameComment::with('user')->where('game_id', (string) $game['id'])->latest()->limit(5)->get(),
@@ -268,22 +281,27 @@ class RandomGameController extends Controller
     /**
      * Cache the catalogue count for a day; selecting a random page then needs only one request.
      */
-    private function totalGames(): ?int
+    /**
+     * Count games matching the selected filters so the random page range is accurate.
+     *
+     * @param  array<string, string>  $filters
+     */
+    private function totalGames(array $filters): ?int
     {
         if (blank(config('services.rawg.key'))) {
             return null;
         }
 
+        $query = $this->apiQuery($filters, 1);
+        $query['page_size'] = 1;
+        $cacheKey = 'rawg.catalogue.total.'.md5(http_build_query(Arr::except($query, 'key')));
+
         try {
-            return Cache::remember('rawg.catalogue.total', now()->addDay(), function (): int {
+            return Cache::remember($cacheKey, now()->addDay(), function () use ($query): int {
                 $response = Http::baseUrl(config('services.rawg.url'))
                     ->acceptJson()
                     ->timeout(10)
-                    ->get('games', [
-                        'key' => config('services.rawg.key'),
-                        'page' => 1,
-                        'page_size' => 1,
-                    ])
+                    ->get('games', $query)
                     ->throw();
 
                 return (int) $response->json('count', 0);

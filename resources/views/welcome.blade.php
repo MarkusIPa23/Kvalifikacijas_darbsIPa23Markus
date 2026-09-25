@@ -100,27 +100,27 @@
                     <a class="quick-tool-button" href="{{ route('future.hybrid') }}">
                         <span class="quick-tool-icon" aria-hidden="true">⭐</span>
                         <span><strong>Hibrīda veidotājs</strong><small>Izveido savu spēļu atlasi</small></span>
-                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                        <span class="quick-tool-action">Atvērt <span aria-hidden="true">→</span></span>
                     </a>
                     <a class="quick-tool-button" href="{{ route('future.random') }}">
                         <span class="quick-tool-icon" aria-hidden="true">↻</span>
                         <span><strong>Adaptive random</strong><small>Atrodi spēli pēc noskaņojuma</small></span>
-                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                        <span class="quick-tool-action">Atvērt <span aria-hidden="true">→</span></span>
                     </a>
                     <a class="quick-tool-button" href="{{ route('future.comparison') }}">
                         <span class="quick-tool-icon" aria-hidden="true">⇄</span>
                         <span><strong>Salīdzināšana</strong><small>Novērtē divas spēles</small></span>
-                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                        <span class="quick-tool-action">Atvērt <span aria-hidden="true">→</span></span>
                     </a>
                     <a class="quick-tool-button" href="{{ route('future.matches') }}">
                         <span class="quick-tool-icon" aria-hidden="true">%</span>
                         <span><strong>Atbilstības rādītāji</strong><small>Skaties savus labākos match</small></span>
-                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                        <span class="quick-tool-action">Atvērt <span aria-hidden="true">→</span></span>
                     </a>
                     <a class="quick-tool-button" href="{{ route('future.tournament') }}">
                         <span class="quick-tool-icon" aria-hidden="true">⚔</span>
                         <span><strong>Turnīrs</strong><small>Izvēlies savu uzvarētāju</small></span>
-                        <span class="quick-tool-arrow" aria-hidden="true">→</span>
+                        <span class="quick-tool-action">Atvērt <span aria-hidden="true">→</span></span>
                     </a>
                 </div>
             </section>
