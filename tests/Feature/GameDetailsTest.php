@@ -36,4 +36,24 @@ class GameDetailsTest extends TestCase
             ->assertSee('Adventure')
             ->assertSee('Nintendo Switch');
     }
+
+    public function test_missing_game_returns_not_found(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/999999*' => Http::response([], 404),
+        ]);
+
+        $this->get('/games/999999')->assertNotFound();
+    }
+
+    public function test_rawg_connection_failure_returns_service_unavailable(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/4200*' => Http::failedConnection(),
+        ]);
+
+        $this->get('/games/4200')->assertStatus(503);
+    }
 }

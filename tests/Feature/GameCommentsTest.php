@@ -76,6 +76,22 @@ class GameCommentsTest extends TestCase
         $this->assertDatabaseCount('game_comments', 0);
     }
 
+    public function test_rawg_outage_is_not_reported_as_a_missing_game(): void
+    {
+        config(['services.rawg.key' => 'test-key']);
+        Http::fake([
+            'https://api.rawg.io/api/games/4200*' => Http::failedConnection(),
+        ]);
+        $user = User::factory()->create();
+
+        $this
+            ->actingAs($user)
+            ->post('/games/4200/comments', ['body' => 'A useful comment'])
+            ->assertStatus(503);
+
+        $this->assertDatabaseCount('game_comments', 0);
+    }
+
     public function test_all_registered_users_can_see_comments_on_the_games_page(): void
     {
         config([

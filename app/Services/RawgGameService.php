@@ -6,6 +6,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 class RawgGameService
 {
@@ -15,7 +16,7 @@ class RawgGameService
     public function find(int $gameId): ?array
     {
         if (blank(config('services.rawg.key'))) {
-            return null;
+            throw new ServiceUnavailableHttpException(null, 'Spēļu katalogs pašlaik nav pieejams.');
         }
 
         return Cache::remember(
@@ -23,15 +24,29 @@ class RawgGameService
             now()->addMinutes(15),
             function () use ($gameId): ?array {
                 try {
-                    return Http::baseUrl(config('services.rawg.url'))
+                    $response = Http::baseUrl(config('services.rawg.url'))
                         ->acceptJson()
                         ->connectTimeout(3)
                         ->timeout(10)
-                        ->get("games/{$gameId}", ['key' => config('services.rawg.key')])
-                        ->throw()
-                        ->json();
-                } catch (ConnectionException|RequestException) {
-                    return null;
+                        ->get("games/{$gameId}", ['key' => config('services.rawg.key')]);
+
+                    if ($response->notFound()) {
+                        return null;
+                    }
+
+                    $game = $response->throw()->json();
+
+                    if (! is_array($game)) {
+                        throw new ServiceUnavailableHttpException(null, 'Spēļu katalogs atgrieza nederīgu atbildi.');
+                    }
+
+                    return $game;
+                } catch (ConnectionException|RequestException $exception) {
+                    throw new ServiceUnavailableHttpException(
+                        null,
+                        'Spēļu katalogs pašlaik nav pieejams. Lūdzu, mēģini vēlreiz vēlāk.',
+                        $exception,
+                    );
                 }
             },
         );
@@ -39,27 +54,6 @@ class RawgGameService
 
     public function exists(int $gameId): bool
     {
-        if (blank(config('services.rawg.key'))) {
-            return false;
-        }
-
-        return Cache::remember(
-            "rawg.game.exists.{$gameId}",
-            now()->addMinutes(15),
-            function () use ($gameId): bool {
-                try {
-                    Http::baseUrl(config('services.rawg.url'))
-                        ->acceptJson()
-                        ->connectTimeout(3)
-                        ->timeout(10)
-                        ->get("games/{$gameId}", ['key' => config('services.rawg.key')])
-                        ->throw();
-
-                    return true;
-                } catch (ConnectionException|RequestException) {
-                    return false;
-                }
-            },
-        );
+        return $this->find($gameId) !== null;
     }
 }
