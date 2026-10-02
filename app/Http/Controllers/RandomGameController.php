@@ -7,6 +7,7 @@ use App\Models\GameRating;
 use App\Services\RawgGameService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -99,6 +100,39 @@ class RandomGameController extends Controller
             'commentsByGameId' => $commentsByGameId,
             'ratingsByGameId' => $ratingsByGameId,
             'error' => null,
+        ]);
+    }
+
+    public function futureGames(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'genres' => ['sometimes', 'array', 'max:5'],
+            'genres.*' => [Rule::in(array_keys(self::GENRES))],
+            'platform' => ['nullable', Rule::in(array_keys(self::PLATFORMS))],
+            'ordering' => ['nullable', Rule::in(array_keys(self::ORDERINGS))],
+            'page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'page_size' => ['sometimes', 'integer', 'min:1', 'max:40'],
+        ]);
+        $page = (int) ($filters['page'] ?? 1);
+        $pageSize = (int) ($filters['page_size'] ?? 24);
+        unset($filters['page'], $filters['page_size']);
+
+        $catalogue = $this->catalogue($filters, $page, $pageSize);
+
+        if ($catalogue === null) {
+            return response()->json([
+                'message' => 'Spēļu katalogs pašlaik nav pieejams. Lūdzu, mēģini vēlreiz vēlāk.',
+            ], 503);
+        }
+
+        return response()->json([
+            'data' => $catalogue['games'],
+            'meta' => [
+                'page' => $page,
+                'page_size' => $pageSize,
+                'total' => $catalogue['total'],
+            ],
         ]);
     }
 
@@ -246,25 +280,32 @@ class RandomGameController extends Controller
      * @param  array<string, string>  $filters
      * @return array{games: Collection<int, array<string, mixed>>, total: int}|null
      */
-    private function catalogue(array $filters, int $page): ?array
+    private function catalogue(array $filters, int $page, int $pageSize = self::PAGE_SIZE): ?array
     {
         if (blank(config('services.rawg.key'))) {
             return null;
         }
 
-        $query = $this->apiQuery($filters, $page);
+        $query = $this->apiQuery($filters, $page, $pageSize);
         $cacheKey = 'rawg.catalogue.'.md5(http_build_query(Arr::except($query, 'key')));
 
         try {
-            $payload = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($query): array {
+            $payload = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($query): ?array {
                 $response = Http::baseUrl(config('services.rawg.url'))
                     ->acceptJson()
+                    ->connectTimeout(3)
                     ->timeout(10)
                     ->get('games', $query)
                     ->throw();
 
-                return $response->json();
+                $payload = $response->json();
+
+                return is_array($payload) ? $payload : null;
             });
+
+            if ($payload === null) {
+                return null;
+            }
 
             return [
                 'games' => collect($payload['results'] ?? [])
@@ -389,15 +430,15 @@ class RandomGameController extends Controller
     }
 
     /**
-     * @param  array<string, string>  $filters
+     * @param  array<string, mixed>  $filters
      * @return array<string, int|string>
      */
-    private function apiQuery(array $filters, int $page): array
+    private function apiQuery(array $filters, int $page, int $pageSize = self::PAGE_SIZE): array
     {
         $query = [
             'key' => config('services.rawg.key'),
             'page' => $page,
-            'page_size' => self::PAGE_SIZE,
+            'page_size' => $pageSize,
             'ordering' => $filters['ordering'] ?? '-added',
         ];
 
@@ -405,7 +446,9 @@ class RandomGameController extends Controller
             $query['search'] = trim($filters['search']);
         }
 
-        if (filled($filters['genre'] ?? null)) {
+        if (! empty($filters['genres'])) {
+            $query['genres'] = implode(',', $filters['genres']);
+        } elseif (filled($filters['genre'] ?? null)) {
             $query['genres'] = $filters['genre'];
         }
 
@@ -461,7 +504,9 @@ class RandomGameController extends Controller
             'description' => $game['description_raw'] ?? 'Apraksts nav pieejams.',
             'url' => 'https://rawg.io/games/'.($game['slug'] ?? ''),
             'genre' => $genres->implode(', ') ?: 'Nezināms žanrs',
+            'genres' => $genres->all(),
             'platform' => $platforms->implode(', ') ?: 'Nezināma platforma',
+            'platforms' => $platforms->all(),
             'releaseDate' => $game['released'] ?? 'Nav norādīts',
             'rating' => $game['rating'] ?? null,
         ];

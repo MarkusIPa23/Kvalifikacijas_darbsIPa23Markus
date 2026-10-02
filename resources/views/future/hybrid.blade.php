@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="page-shell">
+        @include('future.partials.store-wallpaper')
         <header class="site-header">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true">
@@ -34,7 +35,7 @@
             <section class="selection-intro">
                 <p class="eyebrow">HIBRĪDA VEIDOTĀJS</p>
                 <h1>Izvēlies savas spēles iezīmes.</h1>
-                <p>Veidotājs apvieno žanra, stila un gaumes prioritātes, lai izveidotu personalizētu spēļu izvēli.</p>
+                <p>Atlasi spēles pēc RAWG žanriem un veido kombināciju no izvēlētajiem kataloga ierakstiem.</p>
             </section>
 
             <div class="selection-layout">
@@ -51,37 +52,47 @@
                         <div class="field" style="grid-column: 1 / -1;">
                             <label>Izvēles</label>
                             <div class="tag-list" data-preferences>
-                                <button class="tag-option is-selected" type="button">RPG</button>
-                                <button class="tag-option is-selected" type="button">Action</button>
-                                <button class="tag-option" type="button">Co-op</button>
-                                <button class="tag-option" type="button">Story</button>
-                                <button class="tag-option is-selected" type="button">Open World</button>
-                                <button class="tag-option" type="button">Indie</button>
-                                <button class="tag-option" type="button">Competitive</button>
-                                <button class="tag-option" type="button">Relaxed</button>
-                                <button class="tag-option" type="button">Strategy</button>
-                                <button class="tag-option" type="button">Simulation</button>
-                                <button class="tag-option" type="button">Racing</button>
+                                <button class="tag-option is-selected" type="button" data-genre="action">Action</button>
+                                <button class="tag-option" type="button" data-genre="adventure">Adventure</button>
+                                <button class="tag-option" type="button" data-genre="arcade">Arcade</button>
+                                <button class="tag-option" type="button" data-genre="fighting">Fighting</button>
+                                <button class="tag-option is-selected" type="button" data-genre="indie">Indie</button>
+                                <button class="tag-option" type="button" data-genre="platformer">Platformer</button>
+                                <button class="tag-option" type="button" data-genre="puzzle">Puzzle</button>
+                                <button class="tag-option" type="button" data-genre="racing">Racing</button>
+                                <button class="tag-option is-selected" type="button" data-genre="role-playing-games-rpg">RPG</button>
+                                <button class="tag-option" type="button" data-genre="shooter">Shooter</button>
+                                <button class="tag-option" type="button" data-genre="simulation">Simulation</button>
+                                <button class="tag-option" type="button" data-genre="sports">Sports</button>
+                                <button class="tag-option" type="button" data-genre="strategy">Strategy</button>
                             </div>
                         </div>
                     </div>
 
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:18px;">
-                        <button class="button button-secondary" type="button" data-select-all-tags>Izvēlēties visas iezīmes</button>
+                        <button class="button button-secondary" type="button" data-select-all-tags>Izlozēt 5 žanrus</button>
                         <button class="button button-secondary" type="button" data-clear-tags>Notīrīt atlasi</button>
                     </div>
 
                     <div class="feature-summary">
                         <strong>Pašlaik atlasīts:</strong>
-                        <span data-selected-tags>RPG, Action, Open World</span>
+                        <span data-selected-tags>Action, Indie, RPG</span>
                     </div>
+                    <form class="future-game-search" data-hybrid-search-form>
+                        <label for="hybrid-game-search">Meklē konkrētu spēli</label>
+                        <div class="future-game-search-controls">
+                            <input id="hybrid-game-search" type="search" maxlength="100" placeholder="Piemēram, Hades" data-hybrid-search>
+                            <button class="button button-secondary" type="submit">Meklēt</button>
+                            <button class="future-search-clear" type="button" data-hybrid-search-clear hidden>Notīrīt</button>
+                        </div>
+                    </form>
                     <button class="button button-primary hybrid-search-button" type="button" data-find-games>
                         Meklēt spēles pēc žanriem
                     </button>
                     <button class="button button-secondary hybrid-all-games-button" type="button" data-show-all-games>
                         Rādīt visas spēles
                     </button>
-                    <p class="hybrid-search-status" data-search-status>Izvēlies žanrus un nospied meklēšanas pogu.</p>
+                    <p class="hybrid-search-status" data-search-status role="status">Notiek spēļu ielāde no kataloga...</p>
                     <div class="hybrid-combine-bar" data-combine-bar hidden>
                         <span data-combine-count>0 spēles izvēlētas</span>
                         <button class="button button-primary" type="button" data-combine-games>Apvienot spēles</button>
@@ -100,6 +111,7 @@
         </main>
     </div>
 
+    @include('future.partials.games-api')
     <script>
         const tagButtons = [...document.querySelectorAll('[data-preferences] .tag-option')];
         const selectedTags = document.querySelector('[data-selected-tags]');
@@ -107,6 +119,9 @@
         const clearTagsButton = document.querySelector('[data-clear-tags]');
         const findGamesButton = document.querySelector('[data-find-games]');
         const showAllGamesButton = document.querySelector('[data-show-all-games]');
+        const hybridSearchForm = document.querySelector('[data-hybrid-search-form]');
+        const hybridSearchInput = document.querySelector('[data-hybrid-search]');
+        const hybridSearchClear = document.querySelector('[data-hybrid-search-clear]');
         const searchStatus = document.querySelector('[data-search-status]');
         const hybridResults = document.querySelector('[data-hybrid-results]');
         const combineBar = document.querySelector('[data-combine-bar]');
@@ -114,62 +129,43 @@
         const combineGamesButton = document.querySelector('[data-combine-games]');
         const combinedResult = document.querySelector('[data-combined-result]');
 
-        const hybridGames = [
-            { name: 'The Witcher 3', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/292030/header.jpg' },
-            { name: 'Counter-Strike 2', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg' },
-            { name: 'Stardew Valley', genre: 'RPG', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/413150/header.jpg' },
-            { name: 'Hades', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1145360/header.jpg' },
-            { name: 'Portal 2', genre: 'Action', style: 'Co-op', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/620/header.jpg' },
-            { name: 'Red Dead Redemption 2', genre: 'Action', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1174180/header.jpg' },
-            { name: 'Terraria', genre: 'RPG', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/105600/header.jpg' },
-            { name: 'Skyrim', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg' },
-            { name: 'Minecraft', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1672970/header.jpg' },
-            { name: 'Grand Theft Auto V', genre: 'Action', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/271590/header.jpg' },
-            { name: 'Hollow Knight', genre: 'Indie', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/367520/header.jpg' },
-            { name: 'Fallout 4', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/377160/header.jpg' },
-            { name: 'Cyberpunk 2077', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1091500/header.jpg' },
-            { name: 'Valheim', genre: 'Co-op', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/892970/header.jpg' },
-            { name: 'Among Us', genre: 'Co-op', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/945360/header.jpg' },
-            { name: 'Dead Cells', genre: 'Action', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/588650/header.jpg' },
-            { name: 'Baldur\'s Gate 3', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg' },
-            { name: 'Elden Ring', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg' },
-            { name: 'It Takes Two', genre: 'Co-op', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1426210/header.jpg' },
-            { name: 'Dota 2', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/570/header.jpg' },
-            { name: 'Subnautica', genre: 'Indie', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/264710/header.jpg' },
-            { name: 'Sea of Thieves', genre: 'Co-op', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1172620/header.jpg' },
-            { name: 'Deep Rock Galactic', genre: 'Co-op', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/548430/header.jpg' },
-            { name: 'Risk of Rain 2', genre: 'Action', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/632360/header.jpg' },
-            { name: 'Civilization VI', genre: 'Strategy', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/289070/header.jpg' },
-            { name: 'Total War: WARHAMMER III', genre: 'Strategy', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1142710/header.jpg' },
-            { name: 'Slay the Spire', genre: 'Strategy', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/646570/header.jpg' },
-            { name: 'The Sims 4', genre: 'Simulation', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1222670/header.jpg' },
-            { name: 'Euro Truck Simulator 2', genre: 'Simulation', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/227300/header.jpg' },
-            { name: 'Trackmania', genre: 'Racing', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2225070/header.jpg' },
-            { name: 'Forza Horizon 5', genre: 'Racing', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1551360/header.jpg' },
-            { name: 'Ori and the Will of the Wisps', genre: 'Indie', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1057090/header.jpg' },
-            { name: 'Apex Legends', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1172470/header.jpg' },
-            { name: 'Deep Rock Galactic: Survivor', genre: 'Action', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2321470/header.jpg' },
-        ];
+        let hybridGames = [];
+        let hybridRequestId = 0;
 
         const prototypeState = {
             selectedTags: tagButtons
                 .filter((button) => button.classList.contains('is-selected'))
-                .map((button) => button.textContent.trim()),
+                .map((button) => button.dataset.genre),
             showAllGames: false,
             selectedGames: [],
+            selectedGameRecords: new Map(),
         };
 
         function syncTagSelection() {
             tagButtons.forEach((button) => {
-                const label = button.textContent.trim();
+                const label = button.dataset.genre;
                 button.classList.toggle('is-selected', prototypeState.selectedTags.includes(label));
             });
         }
 
         function renderSelectedTags() {
             if (selectedTags) {
-                selectedTags.textContent = prototypeState.selectedTags.join(', ') || 'Nav atlasītu iezīmju';
+                selectedTags.textContent = prototypeState.selectedTags
+                    .map((genre) => tagButtons.find((button) => button.dataset.genre === genre)?.textContent.trim())
+                    .filter(Boolean)
+                    .join(', ') || 'Nav atlasītu žanru';
             }
+        }
+
+        function pickRandomGenres(count) {
+            const genres = tagButtons.map((button) => button.dataset.genre);
+
+            for (let index = genres.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [genres[index], genres[swapIndex]] = [genres[swapIndex], genres[index]];
+            }
+
+            return genres.slice(0, count);
         }
 
         function escapeHtml(value) {
@@ -183,37 +179,82 @@
         }
 
         function renderHybridResults() {
+            const requestId = ++hybridRequestId;
+            const titleQuery = hybridSearchInput.value.trim();
+
             if (!hybridResults || !searchStatus) {
                 return;
             }
 
-            if (!prototypeState.selectedTags.length && !prototypeState.showAllGames) {
-                searchStatus.textContent = 'Izvēlies vismaz vienu žanru, lai atrastu spēles.';
+            if (!prototypeState.selectedTags.length && !prototypeState.showAllGames && !titleQuery) {
+                searchStatus.textContent = 'Izvēlies žanrus vai meklē spēli pēc nosaukuma.';
+                hybridGames = [];
                 hybridResults.innerHTML = '';
+                renderCombineBar();
                 return;
             }
 
-            const results = prototypeState.showAllGames
-                ? hybridGames
-                : hybridGames.filter((game) => prototypeState.selectedTags.some((tag) => [game.genre, game.style].includes(tag)));
-            searchStatus.textContent = prototypeState.showAllGames
-                ? `Parādītas visas ${results.length} pieejamās spēles.`
-                : `Atrastas ${results.length} spēles pēc tavām izvēlēm.`;
-            showAllGamesButton.textContent = prototypeState.showAllGames ? 'Rādīt pēc žanriem' : 'Rādīt visas spēles';
-            hybridResults.innerHTML = results.length
-                ? results.map((game) => `
-                    <article class="hybrid-result-card ${prototypeState.selectedGames.includes(game.name) ? 'is-chosen' : ''}">
-                        <img src="${escapeHtml(game.image)}" alt="${escapeHtml(game.name)} spēles attēls">
+            const filters = { page_size: 40, ordering: '-rating' };
+            if (titleQuery) {
+                filters.search = titleQuery;
+            } else if (!prototypeState.showAllGames) {
+                if (prototypeState.selectedTags.length) {
+                    filters.genres = prototypeState.selectedTags;
+                }
+            }
+            hybridSearchClear.hidden = !titleQuery;
+            searchStatus.textContent = titleQuery
+                ? `Meklē “${titleQuery}” RAWG katalogā...`
+                : 'Notiek spēļu ielāde no RAWG kataloga...';
+            hybridResults.innerHTML = '';
+            FutureGamesApi.list(filters).then((results) => {
+                if (requestId !== hybridRequestId) {
+                    return;
+                }
+
+                const selectedIds = new Set(prototypeState.selectedGames);
+                const selectedGames = [...prototypeState.selectedGameRecords.values()];
+                hybridGames = [
+                    ...selectedGames,
+                    ...results.filter((game) => !selectedIds.has(game.id)),
+                ];
+                searchStatus.textContent = results.length
+                    ? `Atrastas ${results.length} spēles${titleQuery ? ` pēc nosaukuma “${titleQuery}”` : ' no RAWG kataloga'}.`
+                    : 'RAWG katalogā spēles pēc šīs atlases netika atrastas.';
+                showAllGamesButton.textContent = prototypeState.showAllGames ? 'Rādīt atlasītos žanrus' : 'Rādīt visas spēles';
+                renderHybridCards();
+            }).catch((error) => {
+                if (requestId !== hybridRequestId || error.name === 'AbortError') {
+                    return;
+                }
+
+                hybridGames = [];
+                searchStatus.textContent = error.message;
+                renderHybridCards();
+            });
+        }
+
+        function renderHybridCards() {
+            const selectedIds = new Set(prototypeState.selectedGames);
+            const visibleGames = [
+                ...prototypeState.selectedGameRecords.values(),
+                ...hybridGames.filter((game) => !selectedIds.has(game.id)),
+            ];
+
+            hybridResults.innerHTML = visibleGames.length
+                ? visibleGames.map((game) => `
+                    <article class="hybrid-result-card ${prototypeState.selectedGames.includes(game.id) ? 'is-chosen' : ''}">
+                        ${game.thumbnail ? `<img src="${escapeHtml(game.thumbnail)}" alt="${escapeHtml(game.title)} spēles attēls" loading="lazy" decoding="async">` : ''}
                         <div class="hybrid-result-info">
-                            <strong>${escapeHtml(game.name)}</strong>
-                            <span>${escapeHtml(game.genre)} · ${escapeHtml(game.style)}</span>
+                            <strong><a href="${FutureGamesApi.detailUrl(game.id)}">${escapeHtml(game.title)}</a></strong>
+                            <span>${escapeHtml(game.genre)} · ${escapeHtml(game.platform)}</span>
                         </div>
-                        <button class="button button-secondary ${prototypeState.selectedGames.includes(game.name) ? 'is-selected' : ''}" type="button" data-select-game="${escapeHtml(game.name)}">
-                            ${prototypeState.selectedGames.includes(game.name) ? 'Izvēlēta' : 'Izvēlēties'}
+                        <button class="button button-secondary ${prototypeState.selectedGames.includes(game.id) ? 'is-selected' : ''}" type="button" data-select-game="${game.id}">
+                            ${prototypeState.selectedGames.includes(game.id) ? 'Izvēlēta' : 'Izvēlēties'}
                         </button>
                     </article>
                 `).join('')
-                : '<p class="empty-state">Šiem žanriem pagaidām nav atbilstošu spēļu.</p>';
+                    : '<p class="empty-state">Šiem žanriem pagaidām nav atbilstošu spēļu.</p>';
             renderCombineBar();
         }
 
@@ -236,31 +277,40 @@
         }
 
         function findSimilarGame(selectedGames) {
-            const selectedNames = selectedGames.map((game) => game.name);
-            const selectedGenres = [...new Set(selectedGames.map((game) => game.genre))];
-            const selectedStyles = [...new Set(selectedGames.map((game) => game.style))];
+            const selectedIds = selectedGames.map((game) => game.id);
+            const selectedGenres = [...new Set(selectedGames.flatMap((game) => game.genres))];
 
             return hybridGames
-                .filter((game) => !selectedNames.includes(game.name))
+                .filter((game) => !selectedIds.includes(game.id))
                 .map((game) => ({
                     game,
-                    score: (selectedGenres.includes(game.genre) ? 2 : 0) + (selectedStyles.includes(game.style) ? 1 : 0),
+                    score: game.genres.filter((genre) => selectedGenres.includes(genre)).length,
                 }))
+                .filter((match) => match.score > 0)
                 .sort((first, second) => second.score - first.score)[0]?.game;
         }
 
         tagButtons.forEach((button) => {
             button.addEventListener('click', () => {
-                const label = button.textContent.trim();
+                const label = button.dataset.genre;
                 const index = prototypeState.selectedTags.indexOf(label);
 
                 if (index >= 0) {
                     prototypeState.selectedTags.splice(index, 1);
                     prototypeState.showAllGames = false;
                 } else {
+                    if (prototypeState.selectedTags.length >= 5) {
+                        searchStatus.textContent = 'Vienlaikus vari atlasīt ne vairāk kā 5 žanrus.';
+                        return;
+                    }
                     prototypeState.selectedTags.push(label);
                 }
 
+                hybridRequestId += 1;
+                combinedResult.hidden = true;
+                searchStatus.textContent = 'Atlase mainīta. Nospied meklēšanas pogu.';
+                showAllGamesButton.textContent = 'Rādīt visas spēles';
+                renderCombineBar();
                 syncTagSelection();
                 renderSelectedTags();
             });
@@ -268,8 +318,13 @@
 
         if (selectAllButton) {
             selectAllButton.addEventListener('click', () => {
-                prototypeState.selectedTags = tagButtons.map((button) => button.textContent.trim());
+                prototypeState.selectedTags = pickRandomGenres(5);
                 prototypeState.showAllGames = false;
+                hybridRequestId += 1;
+                combinedResult.hidden = true;
+                searchStatus.textContent = 'Izlozēti 5 nejauši žanri. Nospied meklēšanas pogu, lai atrastu spēles.';
+                showAllGamesButton.textContent = 'Rādīt visas spēles';
+                renderCombineBar();
                 syncTagSelection();
                 renderSelectedTags();
             });
@@ -279,6 +334,11 @@
             clearTagsButton.addEventListener('click', () => {
                 prototypeState.selectedTags = [];
                 prototypeState.showAllGames = false;
+                hybridRequestId += 1;
+                combinedResult.hidden = true;
+                searchStatus.textContent = 'Izvēlies žanrus un nospied meklēšanas pogu.';
+                showAllGamesButton.textContent = 'Rādīt visas spēles';
+                renderCombineBar();
                 syncTagSelection();
                 renderSelectedTags();
             });
@@ -288,9 +348,21 @@
             findGamesButton.addEventListener('click', renderHybridResults);
         }
 
+        hybridSearchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            renderHybridResults();
+        });
+
+        hybridSearchClear.addEventListener('click', () => {
+            hybridSearchInput.value = '';
+            hybridSearchClear.hidden = true;
+            renderHybridResults();
+        });
+
         if (showAllGamesButton) {
             showAllGamesButton.addEventListener('click', () => {
                 prototypeState.showAllGames = !prototypeState.showAllGames;
+                combinedResult.hidden = true;
                 renderHybridResults();
             });
         }
@@ -302,47 +374,49 @@
                     return;
                 }
 
-                const gameName = button.dataset.selectGame;
-                const selectedIndex = prototypeState.selectedGames.indexOf(gameName);
+                const gameId = Number(button.dataset.selectGame);
+                const selectedIndex = prototypeState.selectedGames.indexOf(gameId);
                 if (selectedIndex >= 0) {
                     prototypeState.selectedGames.splice(selectedIndex, 1);
+                    prototypeState.selectedGameRecords.delete(gameId);
                 } else {
-                    prototypeState.selectedGames.push(gameName);
+                    prototypeState.selectedGames.push(gameId);
+                    const selectedGame = hybridGames.find((game) => game.id === gameId);
+                    if (selectedGame) {
+                        prototypeState.selectedGameRecords.set(gameId, selectedGame);
+                    }
                 }
 
                 searchStatus.textContent = `${prototypeState.selectedGames.length} spēles izvēlētas apvienošanai.`;
-                renderHybridResults();
+                renderHybridCards();
             });
         }
 
         if (combineGamesButton) {
             combineGamesButton.addEventListener('click', () => {
-                const selected = hybridGames.filter((game) => prototypeState.selectedGames.includes(game.name));
+                const selected = [...prototypeState.selectedGameRecords.values()];
                 if (selected.length < 2 || !combinedResult) {
                     return;
                 }
 
-                const genres = [...new Set(selected.map((game) => game.genre))].join(' + ');
-                const styles = [...new Set(selected.map((game) => game.style))].join(' + ');
-                const gameNames = selected.map((game) => game.name).join(' × ');
-                const genreList = [...new Set(selected.map((game) => game.genre))];
-                const styleList = [...new Set(selected.map((game) => game.style))];
+                const genreList = [...new Set(selected.flatMap((game) => game.genres))];
+                const genres = genreList.join(' + ');
+                const gameNames = selected.map((game) => game.title).join(' × ');
                 const hybridName = `${genres}: ${createUniqueHybridName(genreList)}`;
                 const sourceCount = selected.length;
                 const similarGame = findSimilarGame(selected);
                 combinedResult.hidden = false;
                 combinedResult.innerHTML = `
                     <div class="hybrid-combined-heading"><span class="mini-label">JAUNA UNIKĀLA SPĒLE</span><strong>${sourceCount} spēļu kombinācija</strong></div>
-                    <div class="hybrid-combined-games">${selected.map((game) => `<img src="${escapeHtml(game.image)}" alt="${escapeHtml(game.name)}">`).join('')}</div>
+                    <div class="hybrid-combined-games">${selected.filter((game) => game.thumbnail).map((game) => `<img src="${escapeHtml(game.thumbnail)}" alt="${escapeHtml(game.title)}" loading="lazy" decoding="async">`).join('')}</div>
                     <h3>${escapeHtml(hybridName)}</h3>
                     <p class="hybrid-combined-description">Unikāla spēles ideja, kas apvieno ${escapeHtml(gameNames)} labākās īpašības vienā pasaulē.</p>
                     <div class="hybrid-combined-section"><strong>Precīzie apvienotie žanri</strong><div class="hybrid-combined-tags">${genreList.map((genre) => `<span>${escapeHtml(genre)}</span>`).join('')}</div></div>
-                    <div class="hybrid-combined-section"><strong>Apvienotie stili</strong><div class="hybrid-combined-tags">${styleList.map((style) => `<span>${escapeHtml(style)}</span>`).join('')}</div></div>
                     ${similarGame ? `
                         <div class="hybrid-similar-result">
                             <div class="hybrid-similar-label">LĪDZĪGA SPĒLE PĒC ŽANRIEM</div>
-                            <img src="${escapeHtml(similarGame.image)}" alt="${escapeHtml(similarGame.name)} spēles attēls">
-                            <div><strong>${escapeHtml(similarGame.name)}</strong><span>${escapeHtml(similarGame.genre)} · ${escapeHtml(similarGame.style)}</span></div>
+                            ${similarGame.thumbnail ? `<img src="${escapeHtml(similarGame.thumbnail)}" alt="${escapeHtml(similarGame.title)} spēles attēls" loading="lazy" decoding="async">` : ''}
+                            <div><strong>${escapeHtml(similarGame.title)}</strong><span>${escapeHtml(similarGame.genre)} · ${escapeHtml(similarGame.platform)}</span></div>
                         </div>
                     ` : ''}
                     <button class="button button-secondary" type="button" data-clear-combination>Sākt jaunu kombināciju</button>
@@ -358,12 +432,15 @@
                 }
 
                 prototypeState.selectedGames = [];
+                prototypeState.selectedGameRecords.clear();
                 combinedResult.hidden = true;
+                renderCombineBar();
                 renderHybridResults();
             });
         }
 
         renderSelectedTags();
+        renderHybridResults();
     </script>
 </body>
 </html>

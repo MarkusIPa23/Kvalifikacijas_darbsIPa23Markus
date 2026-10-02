@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="page-shell">
+        @include('future.partials.store-wallpaper')
         <header class="site-header">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true">
@@ -34,7 +35,7 @@
             <section class="selection-intro">
                 <p class="eyebrow">TURNĪRS</p>
                 <h1>Izvēlies uzvarētāju.</h1>
-                <p>Katrs kandidāts konkursā tiek salīdzināts pēc gaumes, stila un atbilstības, līdz paliek viens uzvarētājs.</p>
+                <p>Katrā pārī izvēlies sev tīkamāko spēli, līdz turnīrā paliek viens uzvarētājs.</p>
             </section>
 
             <div class="selection-layout">
@@ -44,13 +45,13 @@
                             <h2>Turnīra izvēle</h2>
                             <p>Izvēlies savu iecienītāko variantu</p>
                         </div>
-                        <span class="filter-count" data-candidate-count>8 kandidāti</span>
+                        <span class="filter-count" data-candidate-count>Notiek ielāde</span>
                     </div>
 
                     <div class="tournament-actions">
-                        <button class="button button-primary" type="button" data-start-tournament>Sākt turnīru</button>
-                        <button class="button button-secondary" type="button" data-shuffle-games>Sajaukt spēles</button>
-                        <button class="button button-secondary" type="button" data-random-tournament-games>8 random spēles</button>
+                        <button class="button button-primary" type="button" data-start-tournament disabled>Sākt turnīru</button>
+                        <button class="button button-secondary" type="button" data-shuffle-games disabled>Sajaukt spēles</button>
+                        <button class="button button-secondary" type="button" data-random-tournament-games disabled>Nejaušas spēles</button>
                         <button class="button button-secondary" type="button" data-reset-selection>Jauns turnīrs</button>
                     </div>
                     <p class="tournament-status" data-tournament-status>Izveido savu spēļu sarakstu un sāc turnīru.</p>
@@ -59,14 +60,15 @@
                         <div class="tournament-setup-heading">
                             <div>
                                 <strong>Manas turnīra spēles</strong>
-                                <span>Izvēlies vismaz 4 spēles vai pievieno savas.</span>
+                                <span>Izvēlies vismaz 4 spēles no RAWG kataloga.</span>
                             </div>
-                            <span class="filter-count" data-setup-count>8 spēles</span>
+                            <span class="filter-count" data-setup-count>Notiek ielāde</span>
                         </div>
                         <div class="add-game-form">
-                            <input type="text" placeholder="Piemēram, Elden Ring" aria-label="Jaunas spēles nosaukums" data-game-name-input>
-                            <button class="button button-secondary" type="button" data-add-game>Pievienot spēli</button>
+                            <input type="search" maxlength="100" placeholder="Meklēt RAWG spēles" aria-label="Meklēt RAWG spēles" data-game-name-input>
+                            <button class="button button-secondary" type="button" data-add-game>Meklēt katalogā</button>
                         </div>
+                        <div class="hybrid-results" data-api-search-results></div>
                         <div class="game-selection-tools">
                             <input type="search" placeholder="Meklēt izvēlētajās spēlēs" aria-label="Meklēt izvēlētajās spēlēs" data-search-games>
                         </div>
@@ -96,7 +98,9 @@
         </main>
     </div>
 
+    @include('future.partials.games-api')
     <script>
+        const fallbackImage = 'https://placehold.co/640x360/e9edf3/61708a?text=Game';
         const tournament = document.querySelector('[data-tournament]');
         const candidateCounter = document.querySelector('[data-candidate-count]');
         const startTournamentButton = document.querySelector('[data-start-tournament]');
@@ -108,6 +112,7 @@
         const customGameList = document.querySelector('[data-custom-game-list]');
         const gameNameInput = document.querySelector('[data-game-name-input]');
         const addGameButton = document.querySelector('[data-add-game]');
+        const apiSearchResults = document.querySelector('[data-api-search-results]');
         const searchGamesInput = document.querySelector('[data-search-games]');
         const tournamentStatus = document.querySelector('[data-tournament-status]');
         const winnerDefault = document.querySelector('[data-winner-default]');
@@ -115,36 +120,11 @@
         const winnerImage = document.querySelector('[data-winner-image]');
         const winnerName = document.querySelector('[data-winner-name]');
         const sideResetButton = document.querySelector('[data-side-reset]');
-        let candidates = [
-            { name: 'The Witcher 3', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/292030/header.jpg' },
-            { name: 'Counter-Strike 2', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/730/header.jpg' },
-            { name: 'Stardew Valley', genre: 'RPG', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/413150/header.jpg' },
-            { name: 'Hades', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1145360/header.jpg' },
-            { name: 'Portal 2', genre: 'Action', style: 'Co-op', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/620/header.jpg' },
-            { name: 'Red Dead Redemption 2', genre: 'Action', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1174180/header.jpg' },
-            { name: 'Terraria', genre: 'RPG', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/105600/header.jpg' },
-            { name: 'Skyrim', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/489830/header.jpg' },
-        ];
-
-        const randomGamePool = [
-            { name: 'Elden Ring', genre: 'RPG', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1245620/header.jpg' },
-            { name: 'Cyberpunk 2077', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1091500/header.jpg' },
-            { name: 'Baldur\'s Gate 3', genre: 'RPG', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1086940/header.jpg' },
-            { name: 'Hollow Knight', genre: 'Indie', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/367520/header.jpg' },
-            { name: 'Dead Cells', genre: 'Action', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/588650/header.jpg' },
-            { name: 'Risk of Rain 2', genre: 'Action', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/632360/header.jpg' },
-            { name: 'Sea of Thieves', genre: 'Co-op', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1172620/header.jpg' },
-            { name: 'Deep Rock Galactic', genre: 'Co-op', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/548430/header.jpg' },
-            { name: 'Civilization VI', genre: 'Strategy', style: 'Story', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/289070/header.jpg' },
-            { name: 'Slay the Spire', genre: 'Strategy', style: 'Indie', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/646570/header.jpg' },
-            { name: 'The Sims 4', genre: 'Simulation', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1222670/header.jpg' },
-            { name: 'Euro Truck Simulator 2', genre: 'Simulation', style: 'Relaxed', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/227300/header.jpg' },
-            { name: 'Trackmania', genre: 'Racing', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/2225070/header.jpg' },
-            { name: 'Forza Horizon 5', genre: 'Racing', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1551360/header.jpg' },
-            { name: 'Apex Legends', genre: 'Action', style: 'Competitive', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/1172470/header.jpg' },
-            { name: 'Subnautica', genre: 'Indie', style: 'Open World', image: 'https://shared.cloudflare.steamstatic.com/store_item_assets/steam/apps/264710/header.jpg' },
-        ];
-        let usedRandomGames = [];
+        let candidates = [];
+        let searchResults = [];
+        let searchRequestId = 0;
+        let candidateListChanged = false;
+        let catalogueLoaded = false;
 
         let tournamentState = {
             round: 0,
@@ -153,11 +133,7 @@
             completedRounds: [],
         };
 
-        const rounds = [
-            { name: 'Ceturtdaļfināli', games: candidates },
-            { name: 'Pusfināli', games: [] },
-            { name: 'Fināls', games: [] },
-        ];
+        let rounds = [];
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -170,7 +146,31 @@
         }
 
         function gameKey(game) {
-            return encodeURIComponent(game.name);
+            return String(game.id);
+        }
+
+        function normalizeTournamentGame(game) {
+            return {
+                id: game.id,
+                name: game.title,
+                genre: game.genre,
+                style: game.platform,
+                image: game.thumbnail || fallbackImage,
+                genres: game.genres,
+                platforms: game.platforms,
+                rating: game.rating,
+            };
+        }
+
+        function shuffleGames(games) {
+            const shuffledGames = [...games];
+
+            for (let index = shuffledGames.length - 1; index > 0; index -= 1) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffledGames[index], shuffledGames[swapIndex]] = [shuffledGames[swapIndex], shuffledGames[index]];
+            }
+
+            return shuffledGames;
         }
 
         function showChampion(game) {
@@ -208,23 +208,23 @@
                 setup.hidden = isRunning;
             }
             if (shuffleGamesButton) {
-                shuffleGamesButton.disabled = isRunning;
+                shuffleGamesButton.disabled = isRunning || !catalogueLoaded || candidates.length < 2;
             }
             if (randomTournamentGamesButton) {
-                randomTournamentGamesButton.disabled = isRunning;
+                randomTournamentGamesButton.disabled = isRunning || !catalogueLoaded;
             }
             if (startTournamentButton) {
-                startTournamentButton.disabled = isRunning;
+                startTournamentButton.disabled = isRunning || candidates.length < 4;
             }
         }
 
         function advanceByes(round) {
             const automaticWinners = createPairings(round.games)
-                .filter(([first, second]) => first.isBye || second.isBye)
+                .filter(([first, second]) => first.isBye !== second.isBye)
                 .map(([first, second]) => first.isBye ? second : first);
 
             automaticWinners.forEach((game) => {
-                if (!tournamentState.winners.some((winner) => winner.name === game.name)) {
+                if (!tournamentState.winners.some((winner) => winner.id === game.id)) {
                     tournamentState.winners.push(game);
                 }
             });
@@ -259,21 +259,37 @@
             }
 
             setupCount.textContent = `${candidates.length} spēles`;
+            if (candidateCounter) {
+                candidateCounter.textContent = `${candidates.length} kandidāti`;
+            }
+            updateSetupAvailability(tournamentState.round > 0 && tournamentState.round < rounds.length);
             const query = searchGamesInput ? searchGamesInput.value.trim().toLowerCase() : '';
             const visibleGames = candidates
                 .map((game, index) => ({ game, index }))
-                .filter(({ game }) => game.name.toLowerCase().includes(query))
+                .filter(({ game }) => (game.name ?? '').toLowerCase().includes(query))
                 .sort((first, second) => first.index - second.index);
 
             customGameList.innerHTML = visibleGames.length
                 ? visibleGames.map(({ game, index }) => `
                     <article class="custom-game-card">
-                        <img src="${escapeHtml(game.image)}" alt="${escapeHtml(game.name)} spēles attēls">
-                        <div><strong>${escapeHtml(game.name)}</strong><span>${escapeHtml(game.genre)} · ${escapeHtml(game.style)}</span></div>
-                        <button type="button" aria-label="Noņemt ${escapeHtml(game.name)}" data-remove-game="${index}">×</button>
+                        <img src="${escapeHtml(game.image ?? fallbackImage)}" alt="${escapeHtml(game.name ?? 'Spēle')} spēles attēls" loading="lazy" decoding="async">
+                        <div>
+                            <strong>${escapeHtml(game.name ?? 'Nezināma spēle')}</strong>
+                            <span>${escapeHtml(game.genre ?? 'Nezināms žanrs')} · ${escapeHtml(game.style ?? 'Nezināma platforma')}</span>
+                        </div>
+                        <button type="button" aria-label="Noņemt ${escapeHtml(game.name ?? 'spēli')}" data-remove-game="${index}"${candidates.length <= 4 ? ' disabled' : ''}>×</button>
                     </article>
                 `).join('')
-                : '<p class="game-search-empty">Spēle netika atrasta.</p>';
+                : `<p class="game-search-empty">${query ? 'Spēle netika atrasta.' : 'RAWG katalogā nav pieejamu spēļu.'}</p>`;
+        }
+
+        function clearCompletedTournamentAfterRosterChange() {
+            if (tournamentState.round && tournamentState.round === rounds.length) {
+                tournamentState = { round: 0, winners: [], champion: null, completedRounds: [] };
+                rounds = [];
+                clearChampion();
+                renderTournament();
+            }
         }
 
         function renderMatch(pair, matchIndex) {
@@ -285,7 +301,7 @@
                     <article class="bracket-match bracket-match--bye">
                         <div class="bracket-match-topline"><span class="bracket-match-label">Mačs ${matchIndex + 1}</span><span class="bracket-confidence">Brīva vieta</span></div>
                         <button class="bracket-contender is-winner" type="button" data-bracket-winner="${gameKey(activeGame)}">
-                            <img src="${escapeHtml(activeGame.image)}" alt="">
+                            <img src="${escapeHtml(activeGame.image)}" alt="" loading="lazy" decoding="async">
                             <span><i>${escapeHtml(activeGame.genre)}</i>${escapeHtml(activeGame.name)}</span><strong>TĀLĀK</strong>
                         </button>
                         <p class="bracket-bye-note">Šai spēlei nav pretinieka.</p>
@@ -300,12 +316,12 @@
                         <span class="bracket-confidence">Tava izvēle</span>
                     </div>
                     <button class="bracket-contender" type="button" data-bracket-winner="${gameKey(first)}">
-                        <img src="${escapeHtml(first.image)}" alt="">
+                        <img src="${escapeHtml(first.image)}" alt="" loading="lazy" decoding="async">
                         <span><i>${escapeHtml(first.genre)}</i>${escapeHtml(first.name)}</span>
                     </button>
                     <div class="bracket-versus">VS</div>
                     <button class="bracket-contender" type="button" data-bracket-winner="${gameKey(second)}">
-                        <img src="${escapeHtml(second.image)}" alt="">
+                        <img src="${escapeHtml(second.image)}" alt="" loading="lazy" decoding="async">
                         <span><i>${escapeHtml(second.genre)}</i>${escapeHtml(second.name)}</span>
                     </button>
                     <p class="bracket-choice-hint">Uzspied uz spēles, kura tev patīk vairāk.</p>
@@ -333,7 +349,7 @@
             updateSetupAvailability(true);
             setTournamentStatus(`Kārta ${tournamentState.round}: izvēlies uzvarētāju ${pairings.length} īstajos mačos.`);
             tournament.innerHTML = `
-                <div class="bracket-progress" aria-label="Turnīra progress">
+                <div class="bracket-progress" style="--round-count: ${rounds.length}" aria-label="Turnīra progress">
                     ${rounds.map((item, index) => `<span class="${index + 1 <= tournamentState.round ? 'is-active' : ''}">${index + 1}. ${item.name}</span>`).join('')}
                 </div>
                 ${tournamentState.completedRounds.map((completedRound) => `
@@ -378,12 +394,12 @@
             if (!selectedWinner) {
                 return;
             }
-            if (tournamentState.winners.some((game) => game.name === selectedWinner.name)) {
+            if (tournamentState.winners.some((game) => game.id === selectedWinner.id)) {
                 return;
             }
             tournamentState.winners.push(selectedWinner);
             const currentRound = rounds[tournamentState.round - 1];
-            const expectedWinners = currentRound.games.length / 2;
+            const expectedWinners = Math.ceil(currentRound.games.filter((game) => !game.isBye).length / 2);
             setTournamentStatus(`Izvēle saglabāta. Atlikušas ${expectedWinners - tournamentState.winners.length} spēles šajā kārtā.`);
 
             if (tournamentState.winners.length < expectedWinners) {
@@ -409,7 +425,7 @@
             }
 
             tournamentState.completedRounds.push({ name: currentRound.name, winners: [...tournamentState.winners] });
-            rounds[tournamentState.round].games = tournamentState.winners;
+            rounds[tournamentState.round].games = getBracketPool(tournamentState.winners);
             tournamentState.winners = [];
             tournamentState.round += 1;
             renderTournament();
@@ -424,9 +440,14 @@
 
                 tournamentState = { round: 1, winners: [], champion: null, completedRounds: [] };
                 clearChampion();
-                rounds[0].games = getBracketPool(candidates);
-                rounds[1].games = [];
-                rounds[2].games = [];
+                const initialBracket = getBracketPool(candidates);
+                const roundNames = {
+                    4: ['Pusfināli', 'Fināls'],
+                    8: ['Ceturtdaļfināli', 'Pusfināli', 'Fināls'],
+                    16: ['Astotdaļfināli', 'Ceturtdaļfināli', 'Pusfināli', 'Fināls'],
+                };
+                rounds = roundNames[initialBracket.length].map((name) => ({ name, games: [] }));
+                rounds[0].games = initialBracket;
                 if (setup) {
                     setup.hidden = true;
                 }
@@ -437,31 +458,39 @@
 
         if (shuffleGamesButton) {
             shuffleGamesButton.addEventListener('click', () => {
-                candidates.sort(() => Math.random() - 0.5);
+                candidates = shuffleGames(candidates);
+                candidateListChanged = true;
                 renderSetup();
             });
         }
 
         if (randomTournamentGamesButton) {
-            randomTournamentGamesButton.addEventListener('click', () => {
-                let availableGames = randomGamePool.filter((game) => !usedRandomGames.includes(game.name));
-                if (availableGames.length < 8) {
-                    usedRandomGames = [];
-                    availableGames = [...randomGamePool];
-                }
+            randomTournamentGamesButton.addEventListener('click', async () => {
+                randomTournamentGamesButton.disabled = true;
+                setTournamentStatus('Ielādē nejaušas spēles no RAWG...');
 
-                availableGames.sort(() => Math.random() - 0.5);
-                const selectedGames = availableGames.slice(0, 8);
-                usedRandomGames.push(...selectedGames.map((game) => game.name));
-                candidates = selectedGames;
-                tournamentState = { round: 0, winners: [], champion: null, completedRounds: [] };
-                clearChampion();
-                if (setup) {
+                try {
+                    const games = await FutureGamesApi.list({ page_size: 40, ordering: '-rating' });
+
+                    if (games.length < 4) {
+                        throw new Error('RAWG katalogā nav pietiekami daudz spēļu turnīram.');
+                    }
+
+                    const gamePool = games.map(normalizeTournamentGame);
+                    candidates = shuffleGames(gamePool).slice(0, Math.min(8, gamePool.length));
+                    candidateListChanged = true;
+                    tournamentState = { round: 0, winners: [], champion: null, completedRounds: [] };
+                    rounds = [];
+                    clearChampion();
                     setup.hidden = false;
+                    renderSetup();
+                    renderTournament();
+                    setTournamentStatus(`Ielādētas ${candidates.length} nejaušas spēles no RAWG. Pārbaudi sarakstu un sāc turnīru.`);
+                } catch (error) {
+                    setTournamentStatus(error.message || 'Neizdevās ielādēt spēles no RAWG.', 'is-error');
+                } finally {
+                    randomTournamentGamesButton.disabled = false;
                 }
-                renderSetup();
-                renderTournament();
-                setTournamentStatus('Ielādētas 8 jaunas random spēles. Pārbaudi sarakstu un sāc turnīru.');
             });
         }
 
@@ -469,8 +498,7 @@
             resetSelectionButton.addEventListener('click', () => {
                 tournamentState = { round: 0, winners: [], champion: null, completedRounds: [] };
                 clearChampion();
-                rounds[1].games = [];
-                rounds[2].games = [];
+                rounds = [];
                 if (setup) {
                     setup.hidden = false;
                 }
@@ -480,20 +508,75 @@
         }
 
         if (addGameButton) {
-            addGameButton.addEventListener('click', () => {
+            addGameButton.addEventListener('click', async () => {
                 const name = gameNameInput.value.trim();
-                if (!name || candidates.some((game) => game.name.toLowerCase() === name.toLowerCase()) || candidates.length >= 16) {
+                if (!name) {
+                    apiSearchResults.innerHTML = '<p class="game-search-empty">Ievadi spēles nosaukumu.</p>';
                     return;
                 }
 
-                candidates.push({
-                    name,
-                    genre: 'Custom',
-                    style: 'Mana izvēle',
-                    image: `https://placehold.co/640x360/15203a/b9f7cf?text=${encodeURIComponent(name)}`,
-                });
-                gameNameInput.value = '';
+                if (candidates.length >= 16) {
+                    setTournamentStatus('Turnīrā var pievienot ne vairāk kā 16 spēles.', 'is-error');
+                    return;
+                }
+
+                apiSearchResults.textContent = 'Meklē RAWG katalogā...';
+                searchResults = [];
+                const requestId = ++searchRequestId;
+                try {
+                    const results = await FutureGamesApi.list({ search: name, page_size: 8, ordering: '-rating' });
+                    if (requestId !== searchRequestId) {
+                        return;
+                    }
+
+                    searchResults = results;
+                    apiSearchResults.innerHTML = searchResults.length
+                        ? searchResults.map((game) => `
+                            <article class="hybrid-result-card">
+                                ${game.thumbnail ? `<img src="${escapeHtml(game.thumbnail)}" alt="" loading="lazy" decoding="async">` : ''}
+                                <div class="hybrid-result-info"><strong>${escapeHtml(game.title)}</strong><span>${escapeHtml(game.genre)} · ${escapeHtml(game.platform)}</span></div>
+                                <button class="button button-secondary" type="button" data-add-api-game="${game.id}">Pievienot</button>
+                            </article>
+                        `).join('')
+                        : '<p class="game-search-empty">RAWG katalogā spēle netika atrasta.</p>';
+                } catch (error) {
+                    if (requestId !== searchRequestId || error.name === 'AbortError') {
+                        return;
+                    }
+
+                    searchResults = [];
+                    apiSearchResults.textContent = error.message;
+                }
+            });
+        }
+
+        gameNameInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addGameButton.click();
+            }
+        });
+
+        if (apiSearchResults) {
+            apiSearchResults.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-add-api-game]');
+                if (!button) return;
+
+                const game = searchResults.find((result) => String(result.id) === button.dataset.addApiGame);
+                if (!game || candidates.some((candidate) => candidate.id === game.id)) {
+                    setTournamentStatus('Šī spēle jau ir turnīra sarakstā.', 'is-error');
+                    return;
+                }
+                if (candidates.length >= 16) {
+                    setTournamentStatus('Turnīrā var pievienot ne vairāk kā 16 spēles.', 'is-error');
+                    return;
+                }
+
+                candidates.push(normalizeTournamentGame(game));
+                candidateListChanged = true;
+                clearCompletedTournamentAfterRosterChange();
                 renderSetup();
+                setTournamentStatus(`${game.title} pievienota turnīram.`);
             });
         }
 
@@ -515,12 +598,31 @@
                 }
 
                 candidates.splice(Number(removeButton.dataset.removeGame), 1);
+                candidateListChanged = true;
+                clearCompletedTournamentAfterRosterChange();
                 renderSetup();
             });
         }
 
         renderSetup();
         renderTournament();
+        FutureGamesApi.list({ page_size: 40, ordering: '-rating' })
+            .then((games) => {
+                if (!candidateListChanged) {
+                    candidates = games.slice(0, 8).map(normalizeTournamentGame);
+                }
+                catalogueLoaded = true;
+                renderSetup();
+                renderTournament();
+                setTournamentStatus(games.length >= 4
+                    ? 'Spēļu saraksts ielādēts no RAWG kataloga.'
+                    : 'RAWG katalogā pašlaik nav pietiekami daudz spēļu turnīram.', games.length >= 4 ? '' : 'is-error');
+            })
+            .catch((error) => {
+                catalogueLoaded = true;
+                updateSetupAvailability(false);
+                setTournamentStatus(error.message, 'is-error');
+            });
     </script>
 </body>
 </html>

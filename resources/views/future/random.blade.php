@@ -8,6 +8,7 @@
 </head>
 <body>
     <div class="page-shell">
+        @include('future.partials.store-wallpaper')
         <header class="site-header">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true">
@@ -34,7 +35,7 @@
             <section class="selection-intro">
                 <p class="eyebrow">ADAPTIVE RANDOM</p>
                 <h1>Random ieteikumi.</h1>
-                <p>Izvēlies platformu un laika apjomu, lai atrastu spēles, kas vislabāk atbilst tavai garastāvoklim.</p>
+                <p>Filtrē RAWG kataloga spēles pēc platformas un žanra vai izvēlies nejaušu rezultātu.</p>
             </section>
 
             <div class="selection-layout">
@@ -44,113 +45,86 @@
                             <h2>Ieteikumu filtrs</h2>
                             <p>Salīdzini nosacījumus</p>
                         </div>
-                        <span class="filter-count" data-random-count>46 spēles</span>
+                        <span class="filter-count" data-random-count>Notiek ielāde</span>
                     </div>
 
                     <div class="filter-grid">
                         <div class="field">
                             <label for="random-platform">Platforma</label>
                             <select id="random-platform" data-random-platform>
-                                <option value="All" selected>Visas</option>
-                                <option value="PC">PC</option>
-                                <option value="Console">Console</option>
-                                <option value="Mobile">Mobile</option>
+                                <option value="" selected>Visas</option>
+                                <option value="pc">PC</option>
+                                <option value="playstation">PlayStation</option>
+                                <option value="xbox">Xbox</option>
+                                <option value="nintendo-switch">Nintendo Switch</option>
                             </select>
                         </div>
                         <div class="field">
-                            <label for="random-time">Laiks</label>
-                            <select id="random-time" data-random-time>
-                                <option value="Any" selected>Jebkurš</option>
-                                <option value="Short">Īss</option>
-                                <option value="Medium">Vidējs</option>
-                                <option value="Long">Garš</option>
+                            <label for="random-genre">Žanrs</label>
+                            <select id="random-genre" data-random-genre>
+                                <option value="" selected>Visi žanri</option>
+                                <option value="action">Action</option>
+                                <option value="adventure">Adventure</option>
+                                <option value="indie">Indie</option>
+                                <option value="role-playing-games-rpg">RPG</option>
+                                <option value="strategy">Strategy</option>
+                                <option value="simulation">Simulation</option>
+                                <option value="racing">Racing</option>
                             </select>
                         </div>
                     </div>
 
+                    <form class="future-game-search" data-random-search-form>
+                        <label for="random-game-search">Meklē spēli pēc nosaukuma</label>
+                        <div class="future-game-search-controls">
+                            <input id="random-game-search" type="search" maxlength="100" placeholder="Piemēram, Hollow Knight" data-random-search>
+                            <button class="button button-secondary" type="submit">Meklēt</button>
+                            <button class="future-search-clear" type="button" data-random-search-clear hidden>Notīrīt</button>
+                        </div>
+                    </form>
+
                     <div style="margin-bottom:18px;">
-                        <button class="button button-secondary" type="button" data-show-all-results>Izvēlēties visas spēles</button>
+                        <button class="button button-secondary" type="button" data-show-all-results>Notīrīt filtrus</button>
                         <button class="button button-primary random-next-button" type="button" data-next-random>Uzdot man citu spēli</button>
                     </div>
 
                     <div class="random-picked" data-random-picked hidden></div>
                     <div class="recommendation-list" data-random-list></div>
+                    <p class="hybrid-search-status" data-random-status role="status">Notiek spēļu ielāde no kataloga...</p>
                 </div>
 
                 <aside class="side-tip">
                     <div class="sparkle" aria-hidden="true">✦</div>
                     <div class="mini-label">Kritēriji</div>
-                    <h2>Katrs ieteikums tiek izlīdzināts ar jūsu izvēli</h2>
-                    <p>Platformas un laika kritēriji maina prioritātes, lai filtrs vienmēr būtu aktuāls.</p>
+                    <h2>Reāli kataloga dati</h2>
+                    <p>Rezultāti tiek filtrēti RAWG katalogā; vērtējumi ir RAWG kopienas vērtējumi.</p>
                 </aside>
             </div>
         </main>
     </div>
 
+    @include('future.partials.games-api')
     <script>
-        const prototypeGames = [
-            { name: 'The Witcher 3', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Story', mood: 'epic' },
-            { name: 'Counter-Strike 2', genre: 'Action', platform: 'PC', time: 'Short', style: 'Competitive', mood: 'fast' },
-            { name: 'Stardew Valley', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Relaxed', mood: 'cozy' },
-            { name: 'Hades', genre: 'Action', platform: 'PC', time: 'Medium', style: 'Competitive', mood: 'challenging' },
-            { name: 'Portal 2', genre: 'Action', platform: 'PC', time: 'Short', style: 'Co-op', mood: 'smart' },
-            { name: 'Red Dead Redemption 2', genre: 'Action', platform: 'PC', time: 'Long', style: 'Open World', mood: 'immersive' },
-            { name: 'Terraria', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Indie', mood: 'creative' },
-            { name: 'Skyrim', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Open World', mood: 'explore' },
-            { name: 'Minecraft', genre: 'RPG', platform: 'Mobile', time: 'Long', style: 'Relaxed', mood: 'creative' },
-            { name: 'Fortnite', genre: 'Action', platform: 'Console', time: 'Short', style: 'Competitive', mood: 'fast' },
-            { name: 'Elden Ring', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Open World', mood: 'challenging' },
-            { name: 'Cyberpunk 2077', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Story', mood: 'immersive' },
-            { name: 'Baldur\'s Gate 3', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Story', mood: 'epic' },
-            { name: 'Hollow Knight', genre: 'Indie', platform: 'PC', time: 'Medium', style: 'Story', mood: 'explore' },
-            { name: 'Dead Cells', genre: 'Action', platform: 'PC', time: 'Short', style: 'Indie', mood: 'fast' },
-            { name: 'Risk of Rain 2', genre: 'Action', platform: 'PC', time: 'Medium', style: 'Indie', mood: 'challenging' },
-            { name: 'Sea of Thieves', genre: 'Co-op', platform: 'Console', time: 'Long', style: 'Open World', mood: 'relaxed' },
-            { name: 'Deep Rock Galactic', genre: 'Co-op', platform: 'PC', time: 'Medium', style: 'Competitive', mood: 'cozy' },
-            { name: 'Civilization VI', genre: 'Strategy', platform: 'PC', time: 'Long', style: 'Story', mood: 'epic' },
-            { name: 'Slay the Spire', genre: 'Strategy', platform: 'Mobile', time: 'Short', style: 'Indie', mood: 'smart' },
-            { name: 'The Sims 4', genre: 'Simulation', platform: 'PC', time: 'Long', style: 'Relaxed', mood: 'cozy' },
-            { name: 'Euro Truck Simulator 2', genre: 'Simulation', platform: 'PC', time: 'Long', style: 'Relaxed', mood: 'relaxed' },
-            { name: 'Trackmania', genre: 'Racing', platform: 'PC', time: 'Short', style: 'Competitive', mood: 'fast' },
-            { name: 'Forza Horizon 5', genre: 'Racing', platform: 'Console', time: 'Medium', style: 'Open World', mood: 'epic' },
-            { name: 'Apex Legends', genre: 'Action', platform: 'Console', time: 'Short', style: 'Competitive', mood: 'fast' },
-            { name: 'Subnautica', genre: 'Indie', platform: 'PC', time: 'Long', style: 'Open World', mood: 'explore' },
-            { name: 'Grand Theft Auto V', genre: 'Action', platform: 'PC', time: 'Long', style: 'Open World', mood: 'fast' },
-            { name: 'Fallout 4', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Open World', mood: 'explore' },
-            { name: 'Valheim', genre: 'Co-op', platform: 'PC', time: 'Long', style: 'Open World', mood: 'creative' },
-            { name: 'Among Us', genre: 'Co-op', platform: 'Mobile', time: 'Short', style: 'Competitive', mood: 'fun' },
-            { name: 'It Takes Two', genre: 'Co-op', platform: 'Console', time: 'Medium', style: 'Story', mood: 'cozy' },
-            { name: 'Dota 2', genre: 'Action', platform: 'PC', time: 'Medium', style: 'Competitive', mood: 'challenging' },
-            { name: 'League of Legends', genre: 'Action', platform: 'PC', time: 'Medium', style: 'Competitive', mood: 'fast' },
-            { name: 'Rocket League', genre: 'Racing', platform: 'Console', time: 'Short', style: 'Competitive', mood: 'fast' },
-            { name: 'Need for Speed Heat', genre: 'Racing', platform: 'PC', time: 'Medium', style: 'Open World', mood: 'fast' },
-            { name: 'Cities: Skylines', genre: 'Simulation', platform: 'PC', time: 'Long', style: 'Relaxed', mood: 'creative' },
-            { name: 'Planet Zoo', genre: 'Simulation', platform: 'PC', time: 'Long', style: 'Relaxed', mood: 'cozy' },
-            { name: 'Civilization VI', genre: 'Strategy', platform: 'PC', time: 'Long', style: 'Story', mood: 'epic' },
-            { name: 'Age of Empires IV', genre: 'Strategy', platform: 'PC', time: 'Medium', style: 'Competitive', mood: 'challenging' },
-            { name: 'Slay the Spire', genre: 'Strategy', platform: 'Mobile', time: 'Short', style: 'Indie', mood: 'smart' },
-            { name: 'Cuphead', genre: 'Action', platform: 'Console', time: 'Short', style: 'Indie', mood: 'challenging' },
-            { name: 'Ori and the Will of the Wisps', genre: 'Indie', platform: 'PC', time: 'Medium', style: 'Story', mood: 'explore' },
-            { name: 'Celeste', genre: 'Indie', platform: 'PC', time: 'Short', style: 'Story', mood: 'challenging' },
-            { name: 'Outer Wilds', genre: 'Indie', platform: 'PC', time: 'Medium', style: 'Open World', mood: 'explore' },
-            { name: 'No Man\'s Sky', genre: 'Indie', platform: 'Console', time: 'Long', style: 'Open World', mood: 'explore' },
-            { name: 'Monster Hunter: World', genre: 'RPG', platform: 'PC', time: 'Long', style: 'Co-op', mood: 'challenging' },
-        ];
-
         const randomList = document.querySelector('[data-random-list]');
         const randomPlatform = document.querySelector('[data-random-platform]');
-        const randomTime = document.querySelector('[data-random-time]');
+        const randomGenre = document.querySelector('[data-random-genre]');
         const showAllResultsButton = document.querySelector('[data-show-all-results]');
         const nextRandomButton = document.querySelector('[data-next-random]');
         const randomPicked = document.querySelector('[data-random-picked]');
         const randomCount = document.querySelector('[data-random-count]');
+        const randomStatus = document.querySelector('[data-random-status]');
+        const randomSearchForm = document.querySelector('[data-random-search-form]');
+        const randomSearchInput = document.querySelector('[data-random-search]');
+        const randomSearchClear = document.querySelector('[data-random-search-clear]');
 
-        const prototypeState = {
-            platform: randomPlatform ? randomPlatform.value : 'All',
-            time: randomTime ? randomTime.value : 'Any',
-            seenGames: [],
-            showAllResults: true,
+        const randomState = {
+            platform: '',
+            genre: '',
+            search: '',
+            games: [],
+            seenIds: [],
         };
+        let randomRequestId = 0;
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -162,69 +136,35 @@
             }[character]));
         }
 
-        function calculateMatch(game) {
-            let total = 45;
-
-            if (prototypeState.platform !== 'All' && game.platform === prototypeState.platform) total += 20;
-            if (prototypeState.platform === 'All') total += 10;
-
-            if (prototypeState.time !== 'Any' && prototypeState.time === 'Short' && game.time === 'Short') total += 18;
-            if (prototypeState.time !== 'Any' && prototypeState.time === 'Medium' && ['Medium', 'Short'].includes(game.time)) total += 14;
-            if (prototypeState.time !== 'Any' && prototypeState.time === 'Long' && ['Long', 'Medium'].includes(game.time)) total += 16;
-
-            if (prototypeState.time === 'Any') total += 10;
-            if (game.genre === 'RPG' && (prototypeState.time === 'Long' || prototypeState.time === 'Any')) total += 8;
-            if (game.genre === 'Action' && (prototypeState.time === 'Short' || prototypeState.time === 'Any')) total += 8;
-
-            return Math.min(99, Math.max(65, total));
-        }
-
-        function getFilteredGames() {
-            return prototypeGames.filter((game) => {
-                const matchesPlatform = prototypeState.platform === 'All'
-                    ? true
-                    : game.platform === prototypeState.platform;
-
-                const matchesTime = prototypeState.time === 'Any'
-                    ? true
-                    : prototypeState.time === 'Short'
-                        ? ['Short', 'Medium'].includes(game.time)
-                        : prototypeState.time === 'Long'
-                            ? ['Long', 'Medium'].includes(game.time)
-                            : true;
-
-                return matchesPlatform && matchesTime;
-            });
-        }
-
-        function renderRandomList() {
-            const filtered = getFilteredGames();
-            if (!filtered.length) {
-                randomList.innerHTML = '<p class="empty-state">Nav saderīgu rezultātu ar izvēlēto kritēriju.</p>';
+        function renderRandomList(emptyMessage = 'Nav saderīgu rezultātu ar izvēlēto kritēriju.') {
+            if (!randomState.games.length) {
+                randomCount.textContent = '0 spēles';
+                randomList.innerHTML = `<p class="empty-state">${escapeHtml(emptyMessage)}</p>`;
                 return;
             }
 
-            const sortedGames = filtered
+            const sortedGames = randomState.games
                 .slice()
-                .sort((a, b) => calculateMatch(b) - calculateMatch(a));
-            const visibleGames = prototypeState.showAllResults ? sortedGames : sortedGames.slice(0, 6);
+                .sort((first, second) => (Number(second.rating) || 0) - (Number(first.rating) || 0));
             if (randomCount) {
-                randomCount.textContent = `${filtered.length} spēles`;
+                randomCount.textContent = `${sortedGames.length} spēles`;
             }
 
-            randomList.innerHTML = visibleGames
+            randomList.innerHTML = sortedGames
                 .map((game) => {
-                    const match = calculateMatch(game);
+                    const rating = Number(game.rating);
+                    const ratingScore = Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0;
                     return `
                         <article class="recommendation-card">
+                            ${game.thumbnail ? `<a class="recommendation-art" href="${FutureGamesApi.detailUrl(game.id)}" tabindex="-1" aria-hidden="true"><img src="${escapeHtml(game.thumbnail)}" alt="" loading="lazy" decoding="async"></a>` : ''}
                             <div class="recommendation-meta">
-                                <strong>${game.name}</strong>
-                                <span>${game.genre} · ${game.platform}</span>
+                                <strong><a href="${FutureGamesApi.detailUrl(game.id)}">${escapeHtml(game.title)}</a></strong>
+                                <span>${escapeHtml(game.genre)} · ${escapeHtml(game.platform)}</span>
                             </div>
-                            <div class="score-bar"><span style="width: ${match}%"></span></div>
+                            <div class="score-bar" role="img" aria-label="${ratingScore ? `${ratingScore.toFixed(1)} no 5` : 'RAWG vērtējuma nav'}"><span style="width: ${ratingScore * 20}%"></span></div>
                             <div class="recommendation-footer">
-                                <span>${match}% atbilstība</span>
-                                <button type="button" data-game-name="${game.name}">Salīdzināt</button>
+                                <span>${ratingScore ? `${ratingScore.toFixed(1)}/5 RAWG vērtējums` : 'RAWG vērtējuma nav'}</span>
+                                <button type="button" data-game-id="${game.id}">Izvēlēties</button>
                             </div>
                         </article>
                     `;
@@ -232,30 +172,31 @@
         }
 
         function chooseUniqueGame() {
-            const filtered = getFilteredGames();
-            const available = filtered.filter((game) => !prototypeState.seenGames.includes(game.name));
-            const pool = available.length ? available : filtered;
+            const available = randomState.games.filter((game) => !randomState.seenIds.includes(game.id));
+            const pool = available.length ? available : randomState.games;
 
             if (!pool.length || !randomPicked) {
+                randomStatus.textContent = 'Nav spēļu, ko izvēlēties.';
                 return;
             }
 
             if (!available.length) {
-                prototypeState.seenGames = [];
+                randomState.seenIds = [];
             }
 
             const chosen = pool[Math.floor(Math.random() * pool.length)];
-            prototypeState.seenGames.push(chosen.name);
+            randomState.seenIds.push(chosen.id);
+            const rating = Number(chosen.rating);
             randomPicked.hidden = false;
             randomPicked.innerHTML = `
-                <div class="random-picked-badge">JAUNS UNIKĀLS IETEIKUMS</div>
+                <div class="random-picked-badge">NEJAUŠA RAWG KATALOGA SPĒLE</div>
                 <div class="random-picked-content">
                     <div>
-                        <h3>${escapeHtml(chosen.name)}</h3>
-                        <p>${escapeHtml(chosen.genre)} · ${escapeHtml(chosen.platform)} · ${escapeHtml(chosen.time)}</p>
-                        <span>${prototypeState.seenGames.length} spēles jau izmēģinātas šajā atlasē</span>
+                        <h3>${escapeHtml(chosen.title)}</h3>
+                        <p>${escapeHtml(chosen.genre)} · ${escapeHtml(chosen.platform)}</p>
+                        <span>${randomState.seenIds.length} spēles izvēlētas šajā atlasē</span>
                     </div>
-                    <strong>${calculateMatch(chosen)}%</strong>
+                    <strong>${Number.isFinite(rating) ? `${rating.toFixed(1)}/5` : 'N/A'}</strong>
                 </div>
             `;
             randomPicked.classList.remove('is-new');
@@ -263,31 +204,80 @@
             renderRandomList();
         }
 
+        async function loadRandomGames() {
+            const requestId = ++randomRequestId;
+            randomStatus.textContent = 'Notiek spēļu ielāde no RAWG kataloga...';
+            randomList.innerHTML = '';
+            randomPicked.hidden = true;
+            randomState.games = [];
+            randomState.seenIds = [];
+            nextRandomButton.disabled = true;
+            randomCount.textContent = 'Notiek ielāde';
+            const filters = { page_size: 40, ordering: '-rating' };
+            if (randomState.platform) filters.platform = randomState.platform;
+            if (randomState.genre) filters.genres = [randomState.genre];
+            if (randomState.search) filters.search = randomState.search;
+
+            try {
+                const games = await FutureGamesApi.list(filters);
+                if (requestId !== randomRequestId) {
+                    return;
+                }
+
+                randomState.games = games;
+                randomStatus.textContent = randomState.games.length ? '' : 'Katalogā spēles pēc šiem filtriem netika atrastas.';
+                if (randomState.search) {
+                    randomSearchClear.hidden = false;
+                }
+                nextRandomButton.disabled = randomState.games.length === 0;
+                renderRandomList();
+            } catch (error) {
+                if (requestId !== randomRequestId || error.name === 'AbortError') {
+                    return;
+                }
+
+                randomState.games = [];
+                randomStatus.textContent = error.message;
+                renderRandomList('Spēļu katalogu pašlaik nevar ielādēt.');
+                randomCount.textContent = 'Nav pieejams';
+            }
+        }
+
         randomPlatform.addEventListener('change', (event) => {
-            prototypeState.platform = event.target.value;
-            prototypeState.seenGames = [];
-            prototypeState.showAllResults = false;
-            if (randomPicked) randomPicked.hidden = true;
-            renderRandomList();
+            randomState.platform = event.target.value;
+            loadRandomGames();
         });
 
-        randomTime.addEventListener('change', (event) => {
-            prototypeState.time = event.target.value;
-            prototypeState.seenGames = [];
-            prototypeState.showAllResults = false;
-            if (randomPicked) randomPicked.hidden = true;
-            renderRandomList();
+        randomGenre.addEventListener('change', (event) => {
+            randomState.genre = event.target.value;
+            loadRandomGames();
+        });
+
+        randomSearchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            randomState.search = randomSearchInput.value.trim();
+            randomSearchClear.hidden = !randomState.search;
+            loadRandomGames();
+        });
+
+        randomSearchClear.addEventListener('click', () => {
+            randomSearchInput.value = '';
+            randomState.search = '';
+            randomSearchClear.hidden = true;
+            loadRandomGames();
+            randomSearchInput.focus();
         });
 
         if (showAllResultsButton) {
             showAllResultsButton.addEventListener('click', () => {
-                prototypeState.platform = 'All';
-                prototypeState.time = 'Any';
-                prototypeState.seenGames = [];
-                prototypeState.showAllResults = true;
-                if (randomPlatform) randomPlatform.value = 'All';
-                if (randomTime) randomTime.value = 'Any';
-                renderRandomList();
+                randomState.platform = '';
+                randomState.genre = '';
+                randomState.search = '';
+                randomPlatform.value = '';
+                randomGenre.value = '';
+                randomSearchInput.value = '';
+                randomSearchClear.hidden = true;
+                loadRandomGames();
             });
         }
 
@@ -296,15 +286,20 @@
         }
 
         document.addEventListener('click', (event) => {
-            const target = event.target.closest('[data-game-name]');
+            const target = event.target.closest('[data-game-id]');
             if (!target) {
                 return;
             }
 
-            const chosen = target.dataset.gameName;
+            const chosen = randomState.games.find((game) => String(game.id) === target.dataset.gameId);
+            if (!chosen) return;
             const gameInfo = document.createElement('div');
             gameInfo.className = 'winner-banner';
-            gameInfo.innerHTML = `<strong>Pašreizējais ieteikums:</strong><span>${chosen}</span>`;
+            const label = document.createElement('strong');
+            label.textContent = 'Izvēlētā spēle:';
+            const title = document.createElement('span');
+            title.textContent = chosen.title;
+            gameInfo.append(label, title);
 
             const existing = randomList.querySelector('.winner-banner');
             if (existing) {
@@ -314,7 +309,7 @@
             randomList.appendChild(gameInfo);
         });
 
-        renderRandomList();
+        loadRandomGames();
     </script>
 </body>
 </html>

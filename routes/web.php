@@ -41,6 +41,9 @@ Route::get('/future/tournament', function () {
 })->name('future.tournament');
 
 Route::get('/games', [RandomGameController::class, 'search'])->name('games.search');
+Route::get('/future/games', [RandomGameController::class, 'futureGames'])
+    ->middleware('throttle:60,1')
+    ->name('future.games');
 Route::get('/games/{gameId}', [RandomGameController::class, 'show'])
     ->whereNumber('gameId')
     ->name('games.show');
