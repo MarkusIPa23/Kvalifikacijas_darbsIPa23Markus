@@ -15,6 +15,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="auth-page">
+        @include('future.partials.store-wallpaper')
         <div class="auth-shell">
             <header class="site-header auth-header">
                 <a class="brand" href="{{ url('/') }}">

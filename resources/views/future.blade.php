@@ -7,6 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    @include('future.partials.store-wallpaper')
     <div class="page-shell">
         <header class="site-header">
             <a class="brand" href="{{ url('/') }}">

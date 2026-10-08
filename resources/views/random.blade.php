@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nejauša spēle — Game to Top</title>
+    @vite(['resources/css/store-wallpaper.css'])
     <style>
         :root { --ink: #15203a; --muted: #65718a; --purple: #6d4aff; --purple-dark: #4f2bdf; --bg: #f5f7fc; --line: #dfe5ee; --mint: #c7f8d6; --surface: #fff; }
         * { box-sizing: border-box; }
@@ -69,6 +70,13 @@
         .comment-item { padding: 12px 14px; border: 1px solid #eef1f7; border-radius: 10px; background: #f9fafc; }
         .comment-item strong { display: block; margin-bottom: 4px; color: var(--purple); font-size: .76rem; }
         .comment-item p { margin: 0; color: var(--ink); line-height: 1.5; }
+        .comment-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+        .comment-edit { flex: 1 1 100%; }
+        .comment-edit summary { color: var(--purple); font-size: .78rem; font-weight: bold; cursor: pointer; }
+        .comment-edit-form { display: grid; gap: 8px; margin-top: 8px; }
+        .comment-edit-form textarea { width: 100%; min-height: 65px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; resize: vertical; }
+        .comment-tools button { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: .75rem; cursor: pointer; }
+        .comment-tools .comment-delete-button { color: #b42318; border-color: #f1c6c3; background: #fff7f6; }
         .comment-form { display: flex; flex-direction: column; gap: 8px; }
         .comment-form textarea { width: 100%; min-height: 80px; padding: 10px 12px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; font: inherit; }
         .comment-form button { align-self: flex-start; padding: 10px 16px; border: 0; border-radius: 10px; color: #fff; background: var(--purple); font-weight: bold; cursor: pointer; }
@@ -81,6 +89,7 @@
     </style>
 </head>
 <body>
+    @include('future.partials.store-wallpaper')
     <main class="container">
         <header>
             <a class="brand" href="{{ route('home') }}">Game to Top</a>
@@ -226,6 +235,7 @@
                                 <div class="comment-item">
                                     <strong>{{ $comment->user->name }}</strong>
                                     <p>{{ $comment->body }}</p>
+                                    @include('components.game-comment-actions', ['comment' => $comment])
                                 </div>
                             @endforeach
                         </div>

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -58,6 +59,84 @@ class GameCommentsTest extends TestCase
             ->assertSessionHasErrors('body');
 
         $this->assertDatabaseCount('game_comments', 0);
+    }
+
+    public function test_comment_author_can_edit_their_comment(): void
+    {
+        $author = User::factory()->create();
+        $comment = $author->gameComments()->create([
+            'game_id' => '4200',
+            'body' => 'Original comment.',
+        ]);
+
+        $this
+            ->actingAs($author)
+            ->from('/games?search=zelda')
+            ->patch(route('games.comments.update', $comment), ['body' => 'Updated comment.'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/games?search=zelda');
+
+        $this->assertDatabaseHas('game_comments', [
+            'id' => $comment->id,
+            'body' => 'Updated comment.',
+        ]);
+    }
+
+    public function test_comment_author_can_delete_their_comment(): void
+    {
+        $author = User::factory()->create();
+        $comment = $author->gameComments()->create([
+            'game_id' => '4200',
+            'body' => 'Remove this comment.',
+        ]);
+
+        $this
+            ->actingAs($author)
+            ->from('/games?search=zelda')
+            ->delete(route('games.comments.destroy', $comment))
+            ->assertRedirect('/games?search=zelda');
+
+        $this->assertDatabaseMissing('game_comments', ['id' => $comment->id]);
+    }
+
+    public function test_only_the_comment_author_can_manage_a_comment(): void
+    {
+        $author = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $comment = $author->gameComments()->create([
+            'game_id' => '4200',
+            'body' => 'Keep this comment.',
+        ]);
+
+        $this->assertTrue(Gate::forUser($author)->allows('update', $comment));
+        $this->assertTrue(Gate::forUser($author)->allows('delete', $comment));
+        $this->assertFalse(Gate::forUser($otherUser)->allows('update', $comment));
+        $this->assertFalse(Gate::forUser($otherUser)->allows('delete', $comment));
+
+        $this->actingAs($otherUser)
+            ->patch(route('games.comments.update', $comment), ['body' => 'Unauthorized edit.'])
+            ->assertForbidden();
+
+        $this->delete(route('games.comments.destroy', $comment))->assertForbidden();
+
+        $this->assertDatabaseHas('game_comments', [
+            'id' => $comment->id,
+            'body' => 'Keep this comment.',
+        ]);
+    }
+
+    public function test_guest_cannot_edit_or_delete_a_comment(): void
+    {
+        $author = User::factory()->create();
+        $comment = $author->gameComments()->create([
+            'game_id' => '4200',
+            'body' => 'Members-only comment.',
+        ]);
+
+        $this->patch(route('games.comments.update', $comment), ['body' => 'Changed'])
+            ->assertRedirect('/login');
+
+        $this->delete(route('games.comments.destroy', $comment))->assertRedirect('/login');
     }
 
     public function test_comment_requires_a_game_from_rawg(): void
@@ -125,7 +204,16 @@ class GameCommentsTest extends TestCase
             ->get('/games?search=zelda')
             ->assertOk()
             ->assertSee('Everyone should try this game.')
-            ->assertSee('Comment author');
+            ->assertSee('Comment author')
+            ->assertDontSee('Rediģēt')
+            ->assertDontSee('Dzēst');
+
+        $this
+            ->actingAs($author)
+            ->get('/games?search=zelda')
+            ->assertOk()
+            ->assertSee('Rediģēt')
+            ->assertSee('Dzēst');
     }
 
     public function test_guests_do_not_see_game_comments(): void

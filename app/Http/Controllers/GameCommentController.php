@@ -6,6 +6,7 @@ use App\Models\GameComment;
 use App\Services\RawgGameService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
 class GameCommentController extends Controller
@@ -29,6 +30,30 @@ class GameCommentController extends Controller
             'game_title' => $validated['game_title'] ?? null,
             'body' => trim($validated['body']),
         ]);
+
+        return redirect()->back();
+    }
+
+    public function update(Request $request, GameComment $comment): RedirectResponse
+    {
+        Gate::authorize('update', $comment);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'min:2', 'not_regex:/^\s*$/', 'max:500'],
+        ]);
+
+        $comment->update([
+            'body' => trim($validated['body']),
+        ]);
+
+        return redirect()->back();
+    }
+
+    public function destroy(GameComment $comment): RedirectResponse
+    {
+        Gate::authorize('delete', $comment);
+
+        $comment->delete();
 
         return redirect()->back();
     }

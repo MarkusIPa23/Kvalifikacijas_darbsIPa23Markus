@@ -1,4 +1,5 @@
 @import './game-to-top.css';
+@import './store-wallpaper.css';
 
 @tailwind base;
 @tailwind components;

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $game['title'] }} — Game to Top</title>
+    @vite(['resources/css/store-wallpaper.css'])
     <style>
         :root { --ink: #15203a; --muted: #65718a; --purple: #6d4aff; --bg: #f5f7fc; --line: #dfe5ee; }
         * { box-sizing: border-box; }
@@ -31,11 +32,19 @@
         .comment { padding: 12px 0; border-top: 1px solid var(--line); }
         .comment strong { color: var(--purple); font-size: .82rem; }
         .comment p { margin: 5px 0 0; line-height: 1.5; }
+        .comment-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+        .comment-edit { flex: 1 1 100%; }
+        .comment-edit summary { color: var(--purple); font-size: .78rem; font-weight: bold; cursor: pointer; }
+        .comment-edit-form { display: grid; gap: 8px; margin-top: 8px; }
+        .comment-edit-form textarea { width: 100%; min-height: 65px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; resize: vertical; }
+        .comment-tools button { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: .75rem; cursor: pointer; }
+        .comment-tools .comment-delete-button { color: #b42318; border-color: #f1c6c3; background: #fff7f6; }
         .muted { color: var(--muted); font-size: .88rem; }
         @media (max-width: 600px) { .container { width: min(100% - 32px, 960px); } .content { padding: 25px; } }
     </style>
 </head>
 <body>
+    @include('future.partials.store-wallpaper')
     <main class="container">
         <header>
             <a class="brand" href="{{ route('home') }}">Game to Top</a>
@@ -88,7 +97,11 @@
         <section class="panel">
             <h2>Komentāri</h2>
             @forelse ($comments as $comment)
-                <div class="comment"><strong>{{ $comment->user->name }}</strong><p>{{ $comment->body }}</p></div>
+                <div class="comment">
+                    <strong>{{ $comment->user->name }}</strong>
+                    <p>{{ $comment->body }}</p>
+                    @include('components.game-comment-actions', ['comment' => $comment])
+                </div>
             @empty
                 <p class="muted">Šai spēlei vēl nav komentāru.</p>
             @endforelse

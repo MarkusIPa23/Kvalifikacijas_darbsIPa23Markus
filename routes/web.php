@@ -50,6 +50,12 @@ Route::get('/games/{gameId}', [RandomGameController::class, 'show'])
 Route::post('/games/{gameId}/comments', [GameCommentController::class, 'store'])
     ->middleware('auth')
     ->name('games.comments.store');
+Route::patch('/game-comments/{comment}', [GameCommentController::class, 'update'])
+    ->middleware('auth')
+    ->name('games.comments.update');
+Route::delete('/game-comments/{comment}', [GameCommentController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('games.comments.destroy');
 Route::post('/games/{gameId}/ratings', [GameRatingController::class, 'store'])
     ->middleware('auth')
     ->name('games.ratings.store');

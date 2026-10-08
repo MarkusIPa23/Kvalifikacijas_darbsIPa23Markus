@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meklēt spēles — Game to Top</title>
+    @vite(['resources/css/store-wallpaper.css'])
     <style>
         :root { --ink: #15203a; --muted: #65718a; --purple: #6d4aff; --purple-dark: #4f2bdf; --bg: #f5f7fc; --line: #dfe5ee; }
         * { box-sizing: border-box; }
@@ -53,6 +54,13 @@
         .comment-item { margin-bottom: 10px; padding: 9px 10px; border: 1px solid #eef1f7; border-radius: 10px; background: #f9fafc; }
         .comment-item strong { display: block; margin-bottom: 4px; font-size: .75rem; color: var(--purple); }
         .comment-item p { margin: 0; color: var(--ink); font-size: .82rem; line-height: 1.5; }
+        .comment-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+        .comment-edit { flex: 1 1 100%; }
+        .comment-edit summary { color: var(--purple); font-size: .78rem; font-weight: bold; cursor: pointer; }
+        .comment-edit-form { display: grid; gap: 8px; margin-top: 8px; }
+        .comment-edit-form textarea { width: 100%; min-height: 65px; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; resize: vertical; }
+        .comment-tools button { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; font-size: .75rem; cursor: pointer; }
+        .comment-tools .comment-delete-button { color: #b42318; border-color: #f1c6c3; background: #fff7f6; }
         .comment-empty, .comment-login { margin: 0 0 10px; color: var(--muted); font-size: .76rem; }
         .comment-form { margin-top: 12px; }
         .comment-form textarea { width: 100%; min-height: 70px; padding: 10px 12px; border: 1px solid #dfe5ee; border-radius: 10px; background: #fff; color: var(--ink); resize: vertical; font: inherit; }
@@ -71,6 +79,7 @@
     </style>
 </head>
 <body>
+    @include('future.partials.store-wallpaper')
     <main class="container">
         <header>
             <a class="brand" href="{{ route('home') }}">Game to Top</a>
@@ -200,6 +209,7 @@
                                         <div class="comment-item">
                                             <strong>{{ $comment->user->name }}</strong>
                                             <p>{{ $comment->body }}</p>
+                                            @include('components.game-comment-actions', ['comment' => $comment])
                                         </div>
                                     @empty
                                         <p class="comment-empty">Vēl nav komentāru.</p>

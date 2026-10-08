@@ -511,61 +511,6 @@ h1, h2, h3, p { margin-top: 0; }
 }
 
 .future-page-shell { padding-top: 16px; }
-.page-shell:has(> .store-wallpaper) { position: relative; isolation: isolate; }
-.page-shell:has(> .store-wallpaper) > header,
-.page-shell:has(> .store-wallpaper) > main { position: relative; z-index: 1; }
-.store-wallpaper {
-    position: fixed;
-    z-index: 0;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-around;
-    overflow: hidden;
-    opacity: .12;
-    mix-blend-mode: multiply;
-    pointer-events: none;
-    user-select: none;
-}
-.store-wallpaper-row {
-    display: flex;
-    width: max-content;
-    align-items: center;
-    gap: 45px;
-    padding: 0 0 0 5%;
-    transform: rotate(-7deg) scale(1.08);
-    white-space: nowrap;
-}
-.store-wallpaper-row:nth-child(even) { margin-left: -11%; transform: rotate(-7deg) scale(1.08); }
-.store-wordmark {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    color: var(--store-color);
-    font-size: 33px;
-    font-weight: 950;
-    line-height: 1;
-}
-.store-wordmark b {
-    display: grid;
-    width: 37px;
-    height: 37px;
-    flex: 0 0 auto;
-    place-items: center;
-    border-radius: 8px;
-    color: #fff;
-    background: var(--store-color);
-    font-size: 16px;
-    font-weight: 900;
-}
-.store-steam { --store-color: #315a7d; }
-.store-epic { --store-color: #151515; }
-.store-gog { --store-color: #9a4a32; }
-.store-playstation { --store-color: #2457a7; }
-.store-xbox { --store-color: #247647; }
-.store-nintendo { --store-color: #ba3340; }
-.store-itch { --store-color: #bd4c47; }
-.store-humble { --store-color: #a56629; }
 .future-hero {
     max-width: none;
     min-height: 380px;
@@ -672,10 +617,6 @@ h1, h2, h3, p { margin-top: 0; }
     .future-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
-    .store-wallpaper { opacity: .085; }
-    .store-wallpaper-row { gap: 22px; }
-    .store-wordmark { gap: 6px; font-size: 20px; }
-    .store-wordmark b { width: 27px; height: 27px; border-radius: 6px; font-size: 12px; }
     .future-page-shell { padding: 12px 20px 54px; }
     .future-hero { min-height: 0; padding: 22px 0 30px; grid-template-columns: 1fr; gap: 24px; }
     .future-hero h1 { max-width: 520px; font-size: 2.55rem; }
