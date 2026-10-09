@@ -29,8 +29,50 @@ class GameCatalogueTest extends TestCase
                 && ($query['genres'] ?? null) === 'action'
                 && ($query['platforms'] ?? null) === '4'
                 && ($query['dates'] ?? null) === '2020-01-01,2020-12-31'
-                && ($query['ordering'] ?? null) === '-rating';
+                && ! array_key_exists('ordering', $query);
         });
+    }
+
+    public function test_search_shows_exact_title_before_similar_name_matches(): void
+    {
+        $this->fakeRawg([
+            'count' => 4,
+            'results' => [
+                array_replace($this->rawgGame(), ['id' => 4203, 'name' => 'Hyrule Warriors']),
+                array_replace($this->rawgGame(), ['id' => 4202, 'name' => 'The Legend of Zelda: Breath of the Wild']),
+                array_replace($this->rawgGame(), ['id' => 4201, 'name' => 'Zelda II: The Adventure of Link']),
+                array_replace($this->rawgGame(), ['id' => 4200, 'name' => 'Zelda']),
+            ],
+        ]);
+
+        $this->get('/games?search=zelda&ordering=-rating')
+            ->assertSeeInOrder([
+                '<h3>Zelda</h3>',
+                '<h3>Zelda II: The Adventure of Link</h3>',
+                '<h3>The Legend of Zelda: Breath of the Wild</h3>',
+            ], false)
+            ->assertDontSee('Hyrule Warriors')
+            ->assertSee('Atrastas 3 spēles');
+    }
+
+    public function test_future_search_returns_only_name_matches_in_relevance_order(): void
+    {
+        $this->fakeRawg([
+            'count' => 4,
+            'results' => [
+                array_replace($this->rawgGame(), ['id' => 4203, 'name' => 'Hyrule Warriors']),
+                array_replace($this->rawgGame(), ['id' => 4202, 'name' => 'The Legend of Zelda: Breath of the Wild']),
+                array_replace($this->rawgGame(), ['id' => 4201, 'name' => 'Zelda II: The Adventure of Link']),
+                array_replace($this->rawgGame(), ['id' => 4200, 'name' => 'Zelda']),
+            ],
+        ]);
+
+        $this->getJson('/future/games?search=zelda&ordering=-rating')
+            ->assertJsonCount(3, 'data')
+            ->assertJsonPath('meta.total', 3)
+            ->assertJsonPath('data.0.title', 'Zelda')
+            ->assertJsonPath('data.1.title', 'Zelda II: The Adventure of Link')
+            ->assertJsonPath('data.2.title', 'The Legend of Zelda: Breath of the Wild');
     }
 
     public function test_search_displays_an_empty_state_when_no_games_match(): void

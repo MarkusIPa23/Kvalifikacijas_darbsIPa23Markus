@@ -26,26 +26,26 @@
             </nav>
         </header>
 
-        <main class="selection-page">
+        <main class="selection-page random-selection-page">
             <a class="back-link" href="{{ route('future') }}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6" /></svg>
                 Atpakaļ uz Nākotni
             </a>
 
             <section class="selection-intro">
-                <p class="eyebrow">ADAPTIVE RANDOM</p>
-                <h1>Random ieteikumi.</h1>
-                <p>Filtrē RAWG kataloga spēles pēc platformas un žanra vai izvēlies nejaušu rezultātu.</p>
+                <p class="eyebrow">SPĒĻU IZVĒLE / RAWG KATALOGS</p>
+                <h1>Ko spēlēsim šovakar?</h1>
+                <p>Izvēlies platformu un žanru, atrodi konkrētu spēli vai ļauj katalogam izlemt tavā vietā.</p>
             </section>
 
-            <div class="selection-layout">
+            <div class="selection-layout random-selection-layout">
                 <div class="filter-panel">
                     <div class="panel-title">
                         <div>
-                            <h2>Ieteikumu filtrs</h2>
-                            <p>Salīdzini nosacījumus</p>
+                            <p class="random-section-kicker">01 / ATLASE</p>
+                            <h2>Noskaņo savu izlasi</h2>
+                            <p>Rezultāti tiek atlasīti no RAWG spēļu kataloga.</p>
                         </div>
-                        <span class="filter-count" data-random-count>Notiek ielāde</span>
                     </div>
 
                     <div class="filter-grid">
@@ -77,27 +77,43 @@
                     <form class="future-game-search" data-random-search-form>
                         <label for="random-game-search">Meklē spēli pēc nosaukuma</label>
                         <div class="future-game-search-controls">
-                            <input id="random-game-search" type="search" maxlength="100" placeholder="Piemēram, Hollow Knight" data-random-search>
-                            <button class="button button-secondary" type="submit">Meklēt</button>
+                            <input id="random-game-search" type="search" maxlength="100" placeholder="Piemēram, Hollow Knight" data-random-search aria-label="Meklēt spēli pēc nosaukuma">
+                            <button class="button button-secondary" type="submit">Meklēt spēli</button>
                             <button class="future-search-clear" type="button" data-random-search-clear hidden>Notīrīt</button>
                         </div>
                     </form>
 
-                    <div style="margin-bottom:18px;">
-                        <button class="button button-secondary" type="button" data-show-all-results>Notīrīt filtrus</button>
-                        <button class="button button-primary random-next-button" type="button" data-next-random>Uzdot man citu spēli</button>
+                    <div class="random-actions">
+                        <button class="button button-secondary" type="button" data-show-all-results disabled>Atiestatīt filtrus</button>
+                        <button class="button button-primary random-next-button" type="button" data-next-random disabled>Izvēlies man spēli</button>
                     </div>
 
-                    <div class="random-picked" data-random-picked hidden></div>
-                    <div class="recommendation-list" data-random-list></div>
-                    <p class="hybrid-search-status" data-random-status role="status">Notiek spēļu ielāde no kataloga...</p>
+                    <section class="random-results" aria-labelledby="random-results-title">
+                        <div class="random-results-heading">
+                            <div>
+                                <p class="random-section-kicker">02 / SPĒLES</p>
+                                <h2 id="random-results-title">Atbilst tavai izlasei</h2>
+                            </div>
+                            <span class="filter-count" data-random-count aria-live="polite">Notiek ielāde</span>
+                        </div>
+                        <div class="recommendation-list random-results-list" data-random-list aria-busy="true"></div>
+                        <p class="hybrid-search-status random-status" data-random-status role="status" aria-live="polite">Notiek spēļu ielāde no kataloga...</p>
+                    </section>
                 </div>
 
-                <aside class="side-tip">
-                    <div class="sparkle" aria-hidden="true">✦</div>
-                    <div class="mini-label">Kritēriji</div>
-                    <h2>Reāli kataloga dati</h2>
-                    <p>Rezultāti tiek filtrēti RAWG katalogā; vērtējumi ir RAWG kopienas vērtējumi.</p>
+                <aside class="random-spotlight" aria-label="Izvēlētā spēle">
+                    <p class="random-spotlight-kicker">TAVS NĀKAMAIS STARTS</p>
+                    <h2>Vēl neesi izlēmis?</h2>
+                    <div class="random-picked" data-random-picked aria-live="polite">
+                        <div class="random-pick-empty">
+                            <span aria-hidden="true">?</span>
+                            <p>Izvēlies filtrus un nospied “Izvēlies man spēli”.</p>
+                        </div>
+                    </div>
+                    <div class="random-spotlight-note">
+                        <span class="random-live-dot" aria-hidden="true"></span>
+                        <p>Vērtējumi no RAWG kopienas</p>
+                    </div>
                 </aside>
             </div>
         </main>
@@ -123,8 +139,10 @@
             search: '',
             games: [],
             seenIds: [],
+            selectedId: null,
         };
         let randomRequestId = 0;
+        let randomController = null;
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>'"]/g, (character) => ({
@@ -137,6 +155,7 @@
         }
 
         function renderRandomList(emptyMessage = 'Nav saderīgu rezultātu ar izvēlēto kritēriju.') {
+            randomList.setAttribute('aria-busy', 'false');
             if (!randomState.games.length) {
                 randomCount.textContent = '0 spēles';
                 randomList.innerHTML = `<p class="empty-state">${escapeHtml(emptyMessage)}</p>`;
@@ -156,7 +175,7 @@
                     const ratingScore = Number.isFinite(rating) ? Math.max(0, Math.min(5, rating)) : 0;
                     return `
                         <article class="recommendation-card">
-                            ${game.thumbnail ? `<a class="recommendation-art" href="${FutureGamesApi.detailUrl(game.id)}" tabindex="-1" aria-hidden="true"><img src="${escapeHtml(game.thumbnail)}" alt="" loading="lazy" decoding="async"></a>` : ''}
+                            ${game.thumbnail ? `<a class="recommendation-art" href="${FutureGamesApi.detailUrl(game.id)}" tabindex="-1" aria-hidden="true"><img src="${escapeHtml(game.thumbnail)}" alt="" loading="lazy" decoding="async"></a>` : '<div class="recommendation-art recommendation-art-empty" aria-hidden="true"></div>'}
                             <div class="recommendation-meta">
                                 <strong><a href="${FutureGamesApi.detailUrl(game.id)}">${escapeHtml(game.title)}</a></strong>
                                 <span>${escapeHtml(game.genre)} · ${escapeHtml(game.platform)}</span>
@@ -164,11 +183,34 @@
                             <div class="score-bar" role="img" aria-label="${ratingScore ? `${ratingScore.toFixed(1)} no 5` : 'RAWG vērtējuma nav'}"><span style="width: ${ratingScore * 20}%"></span></div>
                             <div class="recommendation-footer">
                                 <span>${ratingScore ? `${ratingScore.toFixed(1)}/5 RAWG vērtējums` : 'RAWG vērtējuma nav'}</span>
-                                <button type="button" data-game-id="${game.id}">Izvēlēties</button>
+                                <button type="button" data-pick-game data-game-id="${escapeHtml(game.id)}" aria-pressed="${String(game.id) === String(randomState.selectedId)}">${String(game.id) === String(randomState.selectedId) ? 'Izvēlēta' : 'Izvēlēties'}</button>
                             </div>
                         </article>
                     `;
                 }).join('');
+        }
+
+        function showPickedGame(chosen) {
+            const rating = chosen.rating === null || chosen.rating === undefined ? NaN : Number(chosen.rating);
+            const detailUrl = FutureGamesApi.detailUrl(chosen.id);
+            randomState.selectedId = chosen.id;
+            randomPicked.innerHTML = `
+                ${chosen.thumbnail ? `<img class="random-picked-art" src="${escapeHtml(chosen.thumbnail)}" alt="${escapeHtml(chosen.title)}" loading="lazy" decoding="async">` : '<div class="random-picked-art random-picked-art-empty" aria-hidden="true"></div>'}
+                <div class="random-picked-content">
+                    <div>
+                        <span class="random-picked-badge">IZVĒLĒTĀ SPĒLE</span>
+                        <h3>${escapeHtml(chosen.title)}</h3>
+                        <p>${escapeHtml(chosen.genre)} · ${escapeHtml(chosen.platform)}</p>
+                    </div>
+                    <strong>${Number.isFinite(rating) ? `${rating.toFixed(1)}<small>/5</small>` : 'N/A'}</strong>
+                </div>
+                <a class="random-picked-link" href="${detailUrl}">Apskatīt spēli <span aria-hidden="true">↗</span></a>
+                <span class="random-picked-count">${randomState.seenIds.length} ${randomState.seenIds.length === 1 ? 'spēle izvēlēta' : 'spēles izvēlētas'} šajā atlasē</span>
+            `;
+            randomPicked.classList.remove('is-new');
+            window.requestAnimationFrame(() => randomPicked.classList.add('is-new'));
+            randomStatus.textContent = `Izvēlēta spēle: ${chosen.title}.`;
+            renderRandomList();
         }
 
         function chooseUniqueGame() {
@@ -186,40 +228,33 @@
 
             const chosen = pool[Math.floor(Math.random() * pool.length)];
             randomState.seenIds.push(chosen.id);
-            const rating = Number(chosen.rating);
-            randomPicked.hidden = false;
-            randomPicked.innerHTML = `
-                <div class="random-picked-badge">NEJAUŠA RAWG KATALOGA SPĒLE</div>
-                <div class="random-picked-content">
-                    <div>
-                        <h3>${escapeHtml(chosen.title)}</h3>
-                        <p>${escapeHtml(chosen.genre)} · ${escapeHtml(chosen.platform)}</p>
-                        <span>${randomState.seenIds.length} spēles izvēlētas šajā atlasē</span>
-                    </div>
-                    <strong>${Number.isFinite(rating) ? `${rating.toFixed(1)}/5` : 'N/A'}</strong>
-                </div>
-            `;
-            randomPicked.classList.remove('is-new');
-            window.requestAnimationFrame(() => randomPicked.classList.add('is-new'));
-            renderRandomList();
+            showPickedGame(chosen);
         }
 
         async function loadRandomGames() {
             const requestId = ++randomRequestId;
+            if (randomController) {
+                randomController.abort();
+            }
+            randomController = new AbortController();
             randomStatus.textContent = 'Notiek spēļu ielāde no RAWG kataloga...';
-            randomList.innerHTML = '';
-            randomPicked.hidden = true;
+            randomList.setAttribute('aria-busy', 'true');
+            randomList.innerHTML = '<div class="random-skeleton"></div><div class="random-skeleton"></div><div class="random-skeleton"></div><div class="random-skeleton"></div>';
+            randomPicked.innerHTML = '<div class="random-pick-empty"><span aria-hidden="true">?</span><p>Izvēlies spēli no jaunās atlases.</p></div>';
+            randomPicked.classList.remove('is-new');
             randomState.games = [];
             randomState.seenIds = [];
+            randomState.selectedId = null;
             nextRandomButton.disabled = true;
-            randomCount.textContent = 'Notiek ielāde';
+            showAllResultsButton.disabled = !randomState.platform && !randomState.genre && !randomState.search;
+            randomCount.textContent = 'Ielādē';
             const filters = { page_size: 40, ordering: '-rating' };
             if (randomState.platform) filters.platform = randomState.platform;
             if (randomState.genre) filters.genres = [randomState.genre];
             if (randomState.search) filters.search = randomState.search;
 
             try {
-                const games = await FutureGamesApi.list(filters);
+                const games = await FutureGamesApi.list(filters, { signal: randomController.signal });
                 if (requestId !== randomRequestId) {
                     return;
                 }
@@ -230,6 +265,7 @@
                     randomSearchClear.hidden = false;
                 }
                 nextRandomButton.disabled = randomState.games.length === 0;
+                showAllResultsButton.disabled = !randomState.platform && !randomState.genre && !randomState.search;
                 renderRandomList();
             } catch (error) {
                 if (requestId !== randomRequestId || error.name === 'AbortError') {
@@ -239,7 +275,7 @@
                 randomState.games = [];
                 randomStatus.textContent = error.message;
                 renderRandomList('Spēļu katalogu pašlaik nevar ielādēt.');
-                randomCount.textContent = 'Nav pieejams';
+                randomCount.textContent = 'Kļūda';
             }
         }
 
@@ -286,27 +322,24 @@
         }
 
         document.addEventListener('click', (event) => {
-            const target = event.target.closest('[data-game-id]');
+            if (!(event.target instanceof Element)) {
+                return;
+            }
+
+            const target = event.target.closest('[data-pick-game]');
             if (!target) {
                 return;
             }
 
             const chosen = randomState.games.find((game) => String(game.id) === target.dataset.gameId);
-            if (!chosen) return;
-            const gameInfo = document.createElement('div');
-            gameInfo.className = 'winner-banner';
-            const label = document.createElement('strong');
-            label.textContent = 'Izvēlētā spēle:';
-            const title = document.createElement('span');
-            title.textContent = chosen.title;
-            gameInfo.append(label, title);
-
-            const existing = randomList.querySelector('.winner-banner');
-            if (existing) {
-                existing.remove();
+            if (!chosen) {
+                return;
             }
 
-            randomList.appendChild(gameInfo);
+            if (!randomState.seenIds.includes(chosen.id)) {
+                randomState.seenIds.push(chosen.id);
+            }
+            showPickedGame(chosen);
         });
 
         loadRandomGames();

@@ -307,12 +307,33 @@ class RandomGameController extends Controller
                 return null;
             }
 
+            $games = collect($payload['results'] ?? [])
+                ->filter(fn (mixed $game): bool => is_array($game) && filled($game['name'] ?? null))
+                ->map(fn (array $game): array => $this->normalizeGame($game))
+                ->values();
+            $search = trim((string) ($filters['search'] ?? ''));
+            $total = (int) ($payload['count'] ?? 0);
+
+            if ($search !== '') {
+                $games = $games
+                    ->map(fn (array $game, int $index): array => [
+                        'game' => $game,
+                        'relevance' => $this->titleSearchRelevance($game['title'], $search),
+                        'index' => $index,
+                    ])
+                    ->filter(fn (array $result): bool => $result['relevance'] !== null)
+                    ->sortBy(fn (array $result): array => [$result['relevance'], $result['index']])
+                    ->pluck('game')
+                    ->values();
+
+                if ($total <= $pageSize) {
+                    $total = $games->count();
+                }
+            }
+
             return [
-                'games' => collect($payload['results'] ?? [])
-                    ->filter(fn (mixed $game): bool => is_array($game) && filled($game['name'] ?? null))
-                    ->map(fn (array $game): array => $this->normalizeGame($game))
-                    ->values(),
-                'total' => (int) ($payload['count'] ?? 0),
+                'games' => $games,
+                'total' => $total,
             ];
         } catch (ConnectionException|RequestException) {
             return null;
@@ -439,11 +460,14 @@ class RandomGameController extends Controller
             'key' => config('services.rawg.key'),
             'page' => $page,
             'page_size' => $pageSize,
-            'ordering' => $filters['ordering'] ?? '-added',
         ];
 
-        if (filled($filters['search'] ?? null)) {
-            $query['search'] = trim($filters['search']);
+        $search = trim((string) ($filters['search'] ?? ''));
+
+        if ($search !== '') {
+            $query['search'] = $search;
+        } else {
+            $query['ordering'] = $filters['ordering'] ?? '-added';
         }
 
         if (! empty($filters['genres'])) {
@@ -461,6 +485,52 @@ class RandomGameController extends Controller
         }
 
         return $query;
+    }
+
+    private function titleSearchRelevance(string $title, string $search): ?int
+    {
+        $normalize = static function (string $value): string {
+            $value = mb_strtolower($value);
+            $value = preg_replace('/[^\p{L}\p{N}]+/u', ' ', $value) ?? '';
+
+            return trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        };
+
+        $normalizedTitle = $normalize($title);
+        $normalizedSearch = $normalize($search);
+
+        if ($normalizedTitle === '' || $normalizedSearch === '') {
+            return null;
+        }
+
+        if ($normalizedTitle === $normalizedSearch) {
+            return 0;
+        }
+
+        if (str_starts_with($normalizedTitle, $normalizedSearch)) {
+            return 1;
+        }
+
+        if (str_contains($normalizedTitle, $normalizedSearch)) {
+            return 2;
+        }
+
+        foreach (explode(' ', $normalizedSearch) as $searchWord) {
+            $wordMatchesTitle = false;
+
+            foreach (explode(' ', $normalizedTitle) as $titleWord) {
+                if (str_contains($titleWord, $searchWord)) {
+                    $wordMatchesTitle = true;
+                    break;
+                }
+            }
+
+            if (! $wordMatchesTitle) {
+                return null;
+            }
+        }
+
+        return 3;
     }
 
     /**

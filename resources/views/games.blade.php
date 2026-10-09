@@ -88,7 +88,7 @@
 
         <p class="eyebrow">SPĒĻU MEKLĒTĀJS</p>
         <h1>Atrodi īsto spēli.</h1>
-        <p class="intro">Meklē pēc spēles nosaukuma vai izmanto filtrus. Rezultāti tiek iegūti tieši no RAWG kataloga, un vari pāriet uz nākamajām lapām, lai apskatītu visas atbilstošās spēles.</p>
+        <p class="intro">Meklē pēc spēles nosaukuma vai izmanto filtrus. Meklējot pēc nosaukuma, precīzākā atbilstība būs pirmā, kam sekos tikai spēles ar līdzīgiem nosaukumiem.</p>
 
         <form class="filters" action="{{ route('games.search') }}" method="GET">
             <div class="filter-grid">
