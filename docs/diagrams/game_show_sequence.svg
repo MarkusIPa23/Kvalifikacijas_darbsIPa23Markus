@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <style>
+    .actor { font: 16px sans-serif; font-weight: bold; }
+    .box { fill: #fff; stroke: #333; stroke-width: 1.5; }
+    .lifeline { stroke: #666; stroke-dasharray: 4 4; stroke-width: 1; }
+    .arrow { stroke: #111; stroke-width: 1.6; fill: none; marker-end: url(#arrowhead); }
+    .note { font: 13px sans-serif; }
+    .label { font: 13px sans-serif; }
+    .header { font: 18px sans-serif; font-weight: bold; }
+  </style>
+
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#111" />
+    </marker>
+  </defs>
+
+  <rect x="10" y="10" width="1180" height="48" rx="6" fill="#f7f7f7" stroke="#ddd" />
+  <text x="24" y="42" class="header">Sekvences diagramma — /games/{gameId} (RandomGameController@show)</text>
+
+  <!-- Participants boxes -->
+  <!-- Positions for boxes -->
+  <g transform="translate(40,80)">
+    <rect x="0" y="0" width="120" height="36" class="box" />
+    <text x="10" y="23" class="actor">Lietotājs</text>
+  </g>
+
+  <g transform="translate(200,80)">
+    <rect x="0" y="0" width="160" height="36" class="box" />
+    <text x="10" y="23" class="actor">Maršrutētājs
+(routes/web.php)</text>
+  </g>
+
+  <g transform="translate(420,80)">
+    <rect x="0" y="0" width="170" height="36" class="box" />
+    <text x="10" y="23" class="actor">Kontrolieris
+RandomGameController</text>
+  </g>
+
+  <g transform="translate(620,80)">
+    <rect x="0" y="0" width="150" height="36" class="box" />
+    <text x="10" y="23" class="actor">Serviss
+RawgGameService</text>
+  </g>
+
+  <g transform="translate(810,80)">
+    <rect x="0" y="0" width="140" height="36" class="box" />
+    <text x="10" y="23" class="actor">External API
+RAWG</text>
+  </g>
+
+  <g transform="translate(980,80)">
+    <rect x="0" y="0" width="180" height="36" class="box" />
+    <text x="10" y="23" class="actor">Modelis
+GameComment / DB</text>
+  </g>
+
+  <!-- Lifelines -->
+  <!-- x positions for lifelines: 100, 280, 505, 695, 905, 1070 -->
+  <line x1="100" y1="140" x2="100" y2="640" class="lifeline" />
+  <line x1="280" y1="140" x2="280" y2="640" class="lifeline" />
+  <line x1="505" y1="140" x2="505" y2="640" class="lifeline" />
+  <line x1="695" y1="140" x2="695" y2="640" class="lifeline" />
+  <line x1="905" y1="140" x2="905" y2="640" class="lifeline" />
+  <line x1="1070" y1="140" x2="1070" y2="640" class="lifeline" />
+
+  <!-- Interactions arrows -->
+  <!-- 1. User -> Router GET -->
+  <path d="M100,160 L280,160" class="arrow" />
+  <text x="190" y="150" class="label">GET /games/{gameId}</text>
+
+  <!-- 2. Router -> Controller invoke show -->
+  <path d="M280,190 L505,190" class="arrow" />
+  <text x="390" y="180" class="label">invoke show(gameId)</text>
+
+  <!-- 3. Controller -> Session/User isFavorite check (local) -->
+  <path d="M505,220 L100,220" class="arrow" />
+  <text x="290" y="210" class="label">check session / isFavorite</text>
+
+  <!-- 4. Controller -> RawgGameService find -->
+  <path d="M505,250 L695,250" class="arrow" />
+  <text x="600" y="240" class="label">RawgGameService::find(gameId)</text>
+
+  <!-- 5. Service -> External API HTTP GET -->
+  <path d="M695,280 L905,280" class="arrow" />
+  <text x="800" y="270" class="label">HTTP GET /games/{gameId}?key=...</text>
+
+  <!-- 6. External API -> Service JSON response -->
+  <path d="M905,310 L695,310" class="arrow" />
+  <text x="800" y="300" class="label">JSON payload (game data)</text>
+
+  <!-- 7. Service -> Controller normalized data -->
+  <path d="M695,340 L505,340" class="arrow" />
+  <text x="600" y="330" class="label">normalized game data</text>
+
+  <!-- 8. Controller -> Model GameComment query -->
+  <path d="M505,370 L1070,370" class="arrow" />
+  <text x="790" y="360" class="label">GameComment::with('user')...->get()</text>
+
+  <!-- 9. Model -> DB SELECT -->
+  <path d="M1070,400 L1070,460" stroke="#111" stroke-width="1.2" marker-end="url(#arrowhead)" />
+  <text x="880" y="395" class="label">SELECT ... FROM game_comments WHERE game_id</text>
+
+  <!-- 10. DB -> Model rows -->
+  <path d="M1070,500 L1070,540" class="arrow" transform="translate(0,-60)" />
+  <text x="860" y="520" class="label">rows (comments)</text>
+
+  <!-- 11. Model -> Controller comments collection -->
+  <path d="M1070,580 L505,580" class="arrow" />
+  <text x="790" y="570" class="label">comments collection</text>
+
+  <!-- 12. Controller -> View return -->
+  <path d="M505,610 L100,610" class="arrow" />
+  <text x="280" y="600" class="label">return view('game', {game, comments, ...})</text>
+
+  <!-- 13. View -> User rendered HTML -->
+  <path d="M100,640 L100,680" stroke="#111" stroke-width="1.2" marker-end="url(#arrowhead)" />
+  <text x="120" y="670" class="note">HTML page with game, comments, ratings</text>
+
+  <!-- Footer note -->
+  <text x="24" y="700" class="note">Izveidots automātiski — ja vēlaties lielāku precizitāti (error handling, cache plūsmas), paziņojiet.</text>
+</svg>
