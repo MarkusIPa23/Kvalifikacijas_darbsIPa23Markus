@@ -1,58 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Kvalifikācijas darbs – Game to Top
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Šis ir Laravel projekts, kurā var apskatīt videospēles, meklēt tās pēc nosaukuma, izmantot filtrus un nejauši izvēlēties spēli. Projekts ir paredzēts lietotājiem, kuri vēlas vieglāk atrast jaunas videospēles un izvēlēties, ko spēlēt. Spēļu informācijas iegūšanai projektā tiek izmantots RAWG Video Games Database API. Projektā ir arī spēļu detalizētās informācijas lapas un turnīra režīms, kurā var izvēlēties spēles savstarpējai sacensībai.
 
-## About Laravel
+## Kā es plānoju šo projektu palaist lokāli
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Es izmantoju Laragon, Cmder termināli un MySQL datubāzi. Projektu var palaist lokāli, izmantojot Laravel izstrādes serveri.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Projektam nepieciešams PHP 8.3 vai jaunāks, Composer, kā arī Node.js un npm, lai uzstādītu un palaistu projekta CSS un JavaScript resursus.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Sākumā ievietoju projektu Laragon **www** mapē un atveru termināli projekta mapē:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+cd C:\laragon\www\Kvalifikacijas_darbsIPa23Markus
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Pēc tam uzstādu PHP atkarības:
 
-## Contributing
+```bash
+composer install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Lai atvērtu projektu Visual Studio Code, izmantoju komandu:
 
-## Code of Conduct
+```bash
+code .
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Lai uzstādītu JavaScript atkarības, izmantoju:
 
-## Security Vulnerabilities
+```bash
+npm install
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Vides konfigurācija
 
-## License
+Pēc projekta atvēršanas izveidoju savu **.env** failu no parauga:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+copy .env.example .env
+```
+
+Projektā izmantoju MySQL datubāzi ar nosaukumu **kvalifikacijas_darbs**. Datubāzes iestatījumus norādu failā **.env**:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=kvalifikacijas_darbs
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Pēc tam izveidoju Laravel lietotnes atslēgu:
+
+```bash
+php artisan key:generate
+```
+
+### Datubāzes migrācijas
+
+Lai izveidotu nepieciešamās datubāzes tabulas, palaižu migrācijas:
+
+```bash
+php artisan migrate
+```
+
+Šī komanda izveido tabulas, kas nepieciešamas projekta darbībai, piemēram, lietotāju, spēļu un ar spēlēm saistīto datu glabāšanai.
+
+Ja projektā ir izveidoti sākuma datu ievietošanas skripti jeb seeders, tos var palaist ar komandu:
+
+```bash
+php artisan db:seed
+```
+
+Komandu izmantoju tikai tad, ja projektā ir nepieciešami un konfigurēti sākuma dati.
+
+### RAWG API konfigurācija
+
+Game to Top izmanto RAWG Video Games Database API, lai iegūtu informāciju par videospēlēm.
+
+Lai izmantotu API, nepieciešams iegūt savu API atslēgu RAWG vietnē: https://rawg.io/apidocs.
+
+Pēc API atslēgas iegūšanas to pievienoju projekta saknes mapē esošajam **.env** failam:
+
+```env
+4f3147ad31ea434097f36f8e663a2f15
+```
+
+Vērtību `your_rawg_api_key_here` aizstāju ar savu API atslēgu. Lai šī konfigurācija darbotos, projekta kodam jāizmanto tieši šāds vides mainīgā nosaukums.
+
+API atslēgu nedrīkst ievietot publiskajā GitHub repozitorijā. Failā **.env.example** atstāju tikai tukšu mainīgā vērtību:
+
+```env
+RAWG_API_KEY=
+```
+
+### Projekta resursu palaišana
+
+Lai palaistu projekta priekšgala resursus izstrādes režīmā, izmantoju:
+
+```bash
+npm run dev
+```
+
+Šī komanda darbojas izstrādes laikā, tāpēc terminālim jāpaliek atvērtam.
+
+### Palaišana pārlūkā
+
+Terminālī palaižu Laravel izstrādes serveri:
+
+```bash
+php artisan serve
+```
+
+Pēc noklusējuma projektu atveru pārlūkā šajā adresē:
+
+http://127.0.0.1:8000/
+
+Ja nepieciešams, Laravel serveri un `npm run dev` palaižu atsevišķos termināļos.
+
+### Projekta galvenās funkcijas
+
+- Videospēļu kataloga apskate.
+- Spēļu meklēšana pēc nosaukuma.
+- Spēļu filtrēšana pēc pieejamajiem kritērijiem.
+- Nejaušas videospēles izvēle.
+- Detalizētas informācijas apskate par izvēlēto spēli.
+- Spēļu datu iegūšana no RAWG API.
+- Turnīra režīms, kurā var izvēlēties spēles savstarpējai sacensībai.
